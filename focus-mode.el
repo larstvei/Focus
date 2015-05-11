@@ -21,18 +21,22 @@
     (move-overlay focus-pre-overlay  (point-min) pre)
     (move-overlay focus-post-overlay post (point-max))))
 
+(defun focus-init ()
+  (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
+        focus-post-overlay (make-overlay (point-max) (point-max)))
+  (let ((color (focus-average-colors
+                (face-attribute 'default :foreground)
+                (face-attribute 'default :background))))
+    (mapc (lambda (o) (overlay-put o 'face (cons 'foreground-color color)))
+          (list focus-pre-overlay focus-post-overlay)))
+  (add-hook 'post-command-hook 'focus-move-focus nil t))
+
+(defun focus-terminate ()
+  (progn (mapc 'delete-overlay (list focus-pre-overlay focus-post-overlay))
+         (remove-hook 'post-command-hook 'focus-move-focus t)))
+
 ;;;###autoload
 (define-minor-mode focus-mode
   "Dim the font color text in surrounding paragraphs."
   :init-value nil
-  (if (not focus-mode)
-      (progn (mapc 'delete-overlay (list focus-pre-overlay focus-post-overlay))
-             (remove-hook 'post-command-hook 'focus-move-focus t))
-    (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
-          focus-post-overlay (make-overlay (point-max) (point-max)))
-    (let ((color (focus-average-colors
-                  (face-attribute 'default :foreground)
-                  (face-attribute 'default :background))))
-      (mapc (lambda (o) (overlay-put o 'face (cons 'foreground-color color)))
-            (list focus-pre-overlay focus-post-overlay)))
-    (add-hook 'post-command-hook 'focus-move-focus nil t)))
+  (if focus-mode (focus-init) (focus-terminate)))
