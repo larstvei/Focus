@@ -1,6 +1,12 @@
 (defvar-local focus-pre-overlay nil)
 (defvar-local focus-post-overlay nil)
 
+(defun focus-search-backward (regex)
+  (save-excursion (re-search-backward regex nil t)))
+
+(defun focus-search-forward (regex)
+  (save-excursion (re-search-forward regex nil t)))
+
 (defun focus-hexstr-to-int (str)
   (read (concat "#x" (substring str 1))))
 
@@ -10,12 +16,10 @@
     (format "#%X" avg)))
 
 (defun focus-move-focus ()
-  (save-excursion
-    (let* ((pre  (or (re-search-backward "^\n" nil t) 1))
-           (post (1- (or (re-search-forward "^\n" nil t 2)
-                         (1+ (point-max))))))
-      (move-overlay focus-pre-overlay  (point-min) pre)
-      (move-overlay focus-post-overlay post (point-max)))))
+  (let* ((pre  (or (focus-search-backward "^\n") (point-min)))
+         (post (or (focus-search-forward  "^\n") (point-max))))
+    (move-overlay focus-pre-overlay  (point-min) pre)
+    (move-overlay focus-post-overlay post (point-max))))
 
 ;;;###autoload
 (define-minor-mode focus-mode
