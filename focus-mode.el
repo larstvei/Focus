@@ -1,3 +1,5 @@
+(require 'cl-lib)
+
 (defvar-local focus-pre-overlay nil)
 (defvar-local focus-post-overlay nil)
 
@@ -7,13 +9,13 @@
 (defun focus-search-forward (regex)
   (save-excursion (re-search-forward regex nil t)))
 
-(defun focus-hexstr-to-int (str)
-  (read (concat "#x" (substring str 1))))
-
-(defun focus-average-colors (hstr1 hstr2 &rest hstrs)
-  (let* ((strs (cons hstr1 (cons hstr2 hstrs)))
-         (avg (/ (apply '+ (mapcar 'focus-hexstr-to-int strs)) 2)))
-    (format "#%X" avg)))
+(defun focus-average-colors (color &rest colors)
+  (let* ((colors (cons color colors))
+         (colors (mapcar 'color-name-to-rgb colors))
+         (len    (length colors))
+         (sums   (apply 'cl-mapcar '+ colors))
+         (avg    (mapcar (lambda (v) (/ v len)) sums)))
+    (apply 'color-rgb-to-hex avg)))
 
 (defun focus-move-focus ()
   (let* ((pre  (or (focus-search-backward "^\n") (point-min)))
