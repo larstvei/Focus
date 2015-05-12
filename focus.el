@@ -1,3 +1,32 @@
+;;; focus.el --- Dim the font color of text in surrounding paragraphs  -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2015  Lars Tveito
+
+;; Author: Lars Tveito <larstvei@ifi.uio.no>
+;; URL: http://github.com/larstvei/Focus
+;; Created: 11th May 2015
+;; Version: 0.0.1
+;; Package-Requires: ((emacs "24") (cl-lib "1.0"))
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;;
+
+;;; Code:
+
 (require 'cl-lib)
 
 (defvar-local focus-pre-overlay nil
@@ -60,3 +89,7 @@ focus-move-focus to `post-command-hook'."
   "Dim the font color text in surrounding paragraphs."
   :init-value nil
   (if focus-mode (focus-init) (focus-terminate)))
+
+
+(provide 'focus)
+;;; focus.el ends here
