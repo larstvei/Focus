@@ -32,6 +32,17 @@
 
 (require 'cl-lib)
 
+(defcustom focus-dimness 0
+  "When `focus-mode' is enabled, the dimness of the sections that
+are out of focus is determined by this integer. A positive value
+increases the dimness of the sections, whilst a negative value
+decreases the dimness.
+
+The default is 0 which means a 50/50 mixture of the background
+and foreground color."
+  :type '(integer)
+  :group 'focus)
+
 (defvar-local focus-pre-overlay nil
   "The overlay that dims the text prior to the current-point.")
 
