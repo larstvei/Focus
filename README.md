@@ -10,6 +10,6 @@ Enable the mode with <kbd> M-x focus-mode </kbd>.
 
 This is what it looks like:
 
-Light Theme (leuven)       |  Dark Theme (monokai)
-:-------------------------:|:-------------------------:
-![](/demo-light.gif =250x) |  ![](/demo-dark.gif =250x)
+Light Theme (leuven)         |  Dark Theme (monokai)
+:---------------------------:|:-------------------------:
+![](./demo-light.gif =250x)  |  ![](./demo-dark.gif =250x)
