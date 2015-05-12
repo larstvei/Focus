@@ -12,4 +12,4 @@ This is what it looks like:
 
 Light Theme (leuven)       |  Dark Theme (monokai)
 :-------------------------:|:-------------------------:
-![](/demo-light.gif)       |  ![](/demo-dark.gif)
+![](/demo-light.gif =250x) |  ![](/demo-dark.gif =250x)
