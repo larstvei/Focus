@@ -69,6 +69,17 @@ of RGB values of the given colors."
          (avg    (mapcar (lambda (v) (/ v len)) sums)))
     (apply 'color-rgb-to-hex avg)))
 
+(defun focus-make-dim-color ()
+  "Uses `focus-dimness' to determine how dim a color that should
+be generated, and returns this color."
+  (let ((background (face-attribute 'default :background))
+        (foreground (face-attribute 'default :foreground))
+        (backgrounds (if (> focus-dimness 0)    focus-dimness  1))
+        (foregrounds (if (< focus-dimness 0) (- focus-dimness) 1)))
+    (apply 'focus-average-colors
+           (append (make-list backgrounds background)
+                   (make-list foregrounds foreground)))))
+
 (defun focus-move-focus ()
   "If `focus-mode' is enabled, this command fires after each
 command, and moves the dimming overlays."
@@ -84,9 +95,7 @@ are invisible until `focus-move-focus' is run. It adds
 focus-move-focus to `post-command-hook'."
   (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
         focus-post-overlay (make-overlay (point-max) (point-max)))
-  (let ((color (focus-average-colors
-                (face-attribute 'default :foreground)
-                (face-attribute 'default :background))))
+  (let ((color (focus-make-dim-color)))
     (mapc (lambda (o) (overlay-put o 'face (cons 'foreground-color color)))
           (list focus-pre-overlay focus-post-overlay)))
   (add-hook 'post-command-hook 'focus-move-focus nil t))
