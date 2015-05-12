@@ -86,7 +86,7 @@ focus-move-focus to `post-command-hook'."
 
 ;;;###autoload
 (define-minor-mode focus-mode
-  "Dim the font color text in surrounding paragraphs."
+  "Dim the font color of text in surrounding paragraphs."
   :init-value nil
   (if focus-mode (focus-init) (focus-terminate)))
 
