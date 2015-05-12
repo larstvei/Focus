@@ -10,4 +10,4 @@ Enable the mode with <kbd> M-x focus-mode </kbd>.
 
 This is what it looks like:
 
-![light-demo](/light-demo.gif)![dark-demo](/dark-demo.gif)
+![demo-light](/demo-light.gif)![demo-dark](/demo-dark.gif)
