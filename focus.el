@@ -73,11 +73,11 @@ first NON-NIL value from applying F to an element in LST."
       (if v v (focus-any f (cdr lst))))))
 
 (defun focus-bounds ()
-  "Returns the bounds of the first thing in `focus-things-order' that
+  "Returns the bounds of the first thing in `focus-mode-to-thing' that
 is NON-NIL."
-  (let* ((modes (mapcar 'car focus-things-order))
+  (let* ((modes (mapcar 'car focus-mode-to-thing))
          (mode  (focus-any 'derived-mode-p modes))
-         (thing (if mode (cdr (assoc mode focus-things-order)) 'sentence)))
+         (thing (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence)))
     (bounds-of-thing-at-point thing)))
 
 (defun focus-average-colors (color &rest colors)
