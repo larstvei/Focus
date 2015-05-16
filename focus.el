@@ -31,6 +31,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'thingatpt)
 
 (defcustom focus-dimness 0
   "When `focus-mode' is enabled, the dimness of the sections that
@@ -43,21 +44,41 @@ and foreground color."
   :type '(integer)
   :group 'focus)
 
+(defcustom focus-mode-to-thing '((prog-mode . defun) (text-mode . sentence))
+  "An associated list between mode and thing (defined in
+thingatpt), which determines the narrowness of the focused
+section.
+
+Note that the order of the list matters. The first mode that the
+current mode is derived from is used, so more modes that have
+many derivatives should be placed by the end of the list.
+
+Things that are defined include `symbol', `list', `sexp',
+`defun', `filename', `url', `email', `word', `sentence',
+`whitespace', `line', and `page'."
+  :type '(repeat symbol)
+  :group 'focus)
+
 (defvar-local focus-pre-overlay nil
   "The overlay that dims the text prior to the current-point.")
 
 (defvar-local focus-post-overlay nil
   "The overlay that dims the text past the current-point.")
 
-(defun focus-search-backward (regex)
-  "A wrapper for re-search-backward, where the point does not move,
-and if the search fails, it returns NIL."
-  (save-excursion (re-search-backward regex nil t)))
+(defun focus-any (f lst)
+  "This function takes a function and a list, and returns the
+first NON-NIL value from applying F to an element in LST."
+  (when lst
+    (let ((v (funcall f (car lst))))
+      (if v v (focus-any f (cdr lst))))))
 
-(defun focus-search-forward (regex)
-  "A wrapper for re-search-backward, where the point does not move,
-and if the search fails, it returns NIL."
-  (save-excursion (re-search-forward regex nil t)))
+(defun focus-bounds ()
+  "Returns the bounds of the first thing in `focus-things-order' that
+is NON-NIL."
+  (let* ((modes (mapcar 'car focus-things-order))
+         (mode  (focus-any 'derived-mode-p modes))
+         (thing (if mode (cdr (assoc mode focus-things-order)) 'sentence)))
+    (bounds-of-thing-at-point thing)))
 
 (defun focus-average-colors (color &rest colors)
   "This function takes one or more colors and returns the average
@@ -83,10 +104,10 @@ be generated, and returns this color."
 (defun focus-move-focus ()
   "If `focus-mode' is enabled, this command fires after each
 command, and moves the dimming overlays."
-  (let* ((pre  (or (focus-search-backward "^\n") (point-min)))
-         (post (or (focus-search-forward  "^\n") (point-max))))
-    (move-overlay focus-pre-overlay  (point-min) pre)
-    (move-overlay focus-post-overlay post (point-max))))
+  (let* ((bounds (focus-bounds)))
+    (when bounds
+      (move-overlay focus-pre-overlay  (point-min) (car bounds))
+      (move-overlay focus-post-overlay (cdr bounds) (point-max)))))
 
 (defun focus-init ()
   "This function is run when focus-mode is enabled. It sets the
