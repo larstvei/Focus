@@ -134,6 +134,5 @@ focus-move-focus to `post-command-hook'."
   :init-value nil
   (if focus-mode (focus-init) (focus-terminate)))
 
-
 (provide 'focus)
 ;;; focus.el ends here
