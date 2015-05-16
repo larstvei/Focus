@@ -65,6 +65,12 @@ Things that are defined include `symbol', `list', `sexp',
 (defvar-local focus-post-overlay nil
   "The overlay that dims the text past the current-point.")
 
+;; Changing major-mode should not affect Focus mode.
+(dolist (var '(focus-pre-overlay
+               focus-post-overlay
+               post-command-hook))
+  (put var 'permanent-local t))
+
 (defun focus-any (f lst)
   "This function takes a function and a list, and returns the
 first NON-NIL value from applying F to an element in LST."
