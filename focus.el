@@ -6,7 +6,7 @@
 ;; URL: http://github.com/larstvei/Focus
 ;; Created: 11th May 2015
 ;; Version: 0.0.1
-;; Package-Requires: ((emacs "24") (cl-lib "1.0"))
+;; Package-Requires: ((emacs "24") (cl-lib "0.5"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -34,20 +34,22 @@
 (require 'thingatpt)
 
 (defcustom focus-dimness 0
-  "When `focus-mode' is enabled, the dimness of the sections that
-are out of focus is determined by this integer. A positive value
-increases the dimness of the sections, whilst a negative value
-decreases the dimness.
+  "Amount of dimness in out of focus sections is determined by this integer.
 
-The default is 0 which means a 50/50 mixture of the background
-and foreground color."
+A positive value increases the dimness of the sections. A
+
+negative value decreases the dimness.
+
+The default is 0 which means a 50/50 mixture of the background and foreground
+color."
   :type '(integer)
   :group 'focus)
 
 (defcustom focus-mode-to-thing '((prog-mode . defun) (text-mode . sentence))
-  "An associated list between mode and thing (defined in
-thingatpt), which determines the narrowness of the focused
-section.
+  "An associated list between mode and thing.
+
+A thing is defined in thingatpt.el; the thing determines the
+narrowness of the focused section.
 
 Note that the order of the list matters. The first mode that the
 current mode is derived from is used, so more modes that have
@@ -59,11 +61,16 @@ Things that are defined include `symbol', `list', `sexp',
   :type '(repeat symbol)
   :group 'focus)
 
-(defvar-local focus-pre-overlay nil
+(defvar focus-pre-overlay nil
   "The overlay that dims the text prior to the current-point.")
 
-(defvar-local focus-post-overlay nil
+(defvar focus-post-overlay nil
   "The overlay that dims the text past the current-point.")
+
+;; Use make-local-variable for backwards compatibility.
+(dolist (var '(focus-pre-overlay
+               focus-post-overlay))
+  (make-local-variable var))
 
 ;; Changing major-mode should not affect Focus mode.
 (dolist (var '(focus-pre-overlay
@@ -72,23 +79,20 @@ Things that are defined include `symbol', `list', `sexp',
   (put var 'permanent-local t))
 
 (defun focus-any (f lst)
-  "This function takes a function and a list, and returns the
-first NON-NIL value from applying F to an element in LST."
+  "Apply F to each element of LST and return first NON-NIL."
   (when lst
     (let ((v (funcall f (car lst))))
       (if v v (focus-any f (cdr lst))))))
 
 (defun focus-bounds ()
-  "Returns the bounds of the first thing in `focus-mode-to-thing' that
-is NON-NIL."
+  "Return the current bounds, based on `focus-mode-to-thing'."
   (let* ((modes (mapcar 'car focus-mode-to-thing))
          (mode  (focus-any 'derived-mode-p modes))
          (thing (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence)))
     (bounds-of-thing-at-point thing)))
 
 (defun focus-average-colors (color &rest colors)
-  "This function takes one or more colors and returns the average
-of RGB values of the given colors."
+  "Takes one or more COLORS and returns the average of the RGB-values."
   (let* ((colors (cons color colors))
          (colors (mapcar 'color-name-to-rgb colors))
          (len    (length colors))
@@ -97,8 +101,7 @@ of RGB values of the given colors."
     (apply 'color-rgb-to-hex avg)))
 
 (defun focus-make-dim-color ()
-  "Uses `focus-dimness' to determine how dim a color that should
-be generated, and returns this color."
+  "Return a dimmed color relative to the current theme."
   (let ((background (face-attribute 'default :background))
         (foreground (face-attribute 'default :foreground))
         (backgrounds (if (> focus-dimness 0)    focus-dimness  1))
@@ -108,18 +111,21 @@ be generated, and returns this color."
                    (make-list foregrounds foreground)))))
 
 (defun focus-move-focus ()
-  "If `focus-mode' is enabled, this command fires after each
-command, and moves the dimming overlays."
+  "Move `focus-pre-overlay' and `focus-post-overlay'.
+
+If function `focus-mode' is enabled, this command fires after
+each command."
   (let* ((bounds (focus-bounds)))
     (when bounds
       (move-overlay focus-pre-overlay  (point-min) (car bounds))
       (move-overlay focus-post-overlay (cdr bounds) (point-max)))))
 
 (defun focus-init ()
-  "This function is run when focus-mode is enabled. It sets the
-`focus-pre-overlay' and `focus-post-overlay' to overlays; these
-are invisible until `focus-move-focus' is run. It adds
-focus-move-focus to `post-command-hook'."
+  "This function is run when command `focus-mode' is enabled.
+
+ It sets the `focus-pre-overlay' and `focus-post-overlay' to
+overlays; these are invisible until `focus-move-focus' is run. It
+adds `focus-move-focus' to `post-command-hook'."
   (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
         focus-post-overlay (make-overlay (point-max) (point-max)))
   (let ((color (focus-make-dim-color)))
@@ -128,9 +134,10 @@ focus-move-focus to `post-command-hook'."
   (add-hook 'post-command-hook 'focus-move-focus nil t))
 
 (defun focus-terminate ()
-  "When `focus-mode' is disabled the overlays pointed to by
-`focus-pre-overlay' and `focus-post-overlay' are deleted, and
-`focus-move-focus' is removed from `post-command-hook'."
+  "This function is run when command `focus-mode' is disabled.
+
+The overlays pointed to by `focus-pre-overlay' and `focus-post-overlay' are
+deleted, and `focus-move-focus' is removed from `post-command-hook'."
   (progn (mapc 'delete-overlay (list focus-pre-overlay focus-post-overlay))
          (remove-hook 'post-command-hook 'focus-move-focus t)))
 
