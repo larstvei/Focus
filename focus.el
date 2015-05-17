@@ -1,4 +1,4 @@
-;;; focus.el --- Dim the font color of text in surrounding paragraphs  -*- lexical-binding: t; -*-
+;;; focus.el --- Dim the font color of text in surrounding sections  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2015  Lars Tveito
 
@@ -23,7 +23,7 @@
 
 ;;; Commentary:
 
-;; Focus provides `focus-mode` that dims the text of surrounding paragraphs,
+;; Focus provides `focus-mode` that dims the text of surrounding sections,
 ;; similar to [iA Writer's](https://ia.net/writer) Focus Mode.
 ;;
 ;; Enable the mode with `M-x focus-mode'.
@@ -143,7 +143,7 @@ deleted, and `focus-move-focus' is removed from `post-command-hook'."
 
 ;;;###autoload
 (define-minor-mode focus-mode
-  "Dim the font color of text in surrounding paragraphs."
+  "Dim the font color of text in surrounding sections."
   :init-value nil
   (if focus-mode (focus-init) (focus-terminate)))
 
