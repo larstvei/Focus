@@ -1,29 +1,15 @@
+[![MELPA](http://melpa.org/packages/focus-badge.svg)](http://melpa.org/#/focus)
 # Focus
 
 Focus provides `focus-mode` that dims the text of surrounding sections, similar to [iA Writer's](https://ia.net/writer) Focus Mode.
 
 ## Installation
 
-This package is still in development, so has not been submitted to
-[Melpa](http://melpa.org/). This section will be simplified when (or if) the
-package is added to Melpa.
+You can install Focus using elpa. It's available on [melpa](http://melpa.milkbox.net/):
 
-The mode has only been tested with Emacs 24.4 and 24.5. It has no dependencies
-other than `cl-lib` which is built in.
+<kbd> M-x package-install focus </kbd>
 
-To install the Emacs extension just download the `focus.el`
-
-```
-git clone git@github.com:larstvei/Focus.git
-```
-
-and store `focus.el` it somewhere in your `load-path`. To use it you can put
-
-```emacs-lisp
-(require 'focus)
-```
-
-in you Emacs configuration file.
+The package has only been tried on Emacs 24.4 and 24.5, but should work on Emacs 24 or higher.
 
 ## Usage
 
