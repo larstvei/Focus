@@ -33,6 +33,10 @@
 (require 'cl-lib)
 (require 'thingatpt)
 
+(defgroup 'focus
+  "Dim the font color of text in surrounding sections."
+  :group 'font-lock)
+
 (defcustom focus-dimness 0
   "Amount of dimness in out of focus sections is determined by this integer.
 
