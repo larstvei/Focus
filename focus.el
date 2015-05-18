@@ -41,12 +41,11 @@
 (defcustom focus-dimness 0
   "Amount of dimness in out of focus sections is determined by this integer.
 
-A positive value increases the dimness of the sections. A
+A positive value increases the dimness of the sections.
+A negative value decreases the dimness.
 
-negative value decreases the dimness.
-
-The default is 0 which means a 50/50 mixture of the background and foreground
-color."
+The default is 0 which means a 50/50 mixture of the background
+and foreground color."
   :type '(integer)
   :group 'focus)
 
