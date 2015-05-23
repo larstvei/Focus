@@ -145,6 +145,18 @@ deleted, and `focus-move-focus' is removed from `post-command-hook'."
   (progn (mapc 'delete-overlay (list focus-pre-overlay focus-post-overlay))
          (remove-hook 'post-command-hook 'focus-move-focus t)))
 
+(defun focus-next-thing (&optional n)
+  "Moves the point to the middle of the Nth next thing."
+  (interactive "p")
+  (forward-thing (focus-get-thing) (+ 1 n))
+  (let ((bounds (focus-bounds)))
+    (goto-char (/ (+ (car bounds) (cdr bounds)) 2)))
+  (recenter nil))
+
+(defun focus-prev-thing (&optional n)
+  "Moves the point to the middle of the Nth previous thing."
+  (interactive "p")
+  (focus-next-thing (- (+ 2 n))))
 ;;;###autoload
 (define-minor-mode focus-mode
   "Dim the font color of text in surrounding sections."
