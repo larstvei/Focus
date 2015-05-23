@@ -96,7 +96,10 @@ Things that are defined include `symbol', `list', `sexp',
     (bounds-of-thing-at-point thing)))
 
 (defun focus-average-colors (color &rest colors)
-  "Takes one or more COLORS and returns the average of the RGB-values."
+  "Takes an average of the colors given by argument.
+Argument COLOR is a color name, and so are the COLORS; COLOR is
+there to ensure that the the function receives at least one
+argument."
   (let* ((colors (cons color colors))
          (colors (mapcar 'color-name-to-rgb colors))
          (len    (length colors))
