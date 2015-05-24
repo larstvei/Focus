@@ -195,11 +195,37 @@ This is added to the `pre-command-hook' when
     (setq focus-read-only-blink-timer
           (run-at-time focus-read-only-blink-seconds nil
                        'focus-read-only-hide-cursor (current-buffer)))))
+
+(defun turn-off-focus-read-only-mode ()
+  "Turn off `focus-read-only-mode'."
+  (interactive)
+  (focus-read-only-mode -1))
+
 ;;;###autoload
 (define-minor-mode focus-mode
   "Dim the font color of text in surrounding sections."
   :init-value nil
   (if focus-mode (focus-init) (focus-terminate)))
+
+;;;###autoload
+(define-minor-mode focus-read-only-mode
+  "A read-only mode optimized for `focus-mode'."
+  :init-value nil
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "n") 'focus-next-thing)
+            (define-key map (kbd "SPC") 'focus-next-thing)
+            (define-key map (kbd "p") 'focus-prev-thing)
+            (define-key map (kbd "S-SPC") 'focus-prev-thing)
+            (define-key map (kbd "i") 'turn-off-focus-read-only-mode)
+            (define-key map (kbd "q") 'turn-off-focus-read-only-mode)
+            map)
+  (read-only-mode (if focus-read-only-mode 1 -1))
+  (when focus-read-only-blink-timer (cancel-timer focus-read-only-blink-timer))
+  (setq cursor-type (not focus-read-only-mode))
+  (setq focus-read-only-blink-timer nil)
+  (remove-hook 'pre-command-hook 'focus-read-only-cursor-blink t)
+  (when focus-read-only-mode
+    (add-hook 'pre-command-hook 'focus-read-only-cursor-blink nil t)))
 
 (provide 'focus)
 ;;; focus.el ends here
