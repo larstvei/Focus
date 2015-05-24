@@ -167,8 +167,9 @@ deleted, and `focus-move-focus' is removed from `post-command-hook'."
   (interactive "p")
   (forward-thing (focus-get-thing) (+ 1 n))
   (let ((bounds (focus-bounds)))
-    (goto-char (/ (+ (car bounds) (cdr bounds)) 2)))
-  (recenter nil))
+    (when bounds
+      (goto-char (/ (+ (car bounds) (cdr bounds)) 2))
+      (recenter nil))))
 
 (defun focus-prev-thing (&optional n)
   "Moves the point to the middle of the Nth previous thing."
