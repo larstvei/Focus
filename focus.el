@@ -88,12 +88,15 @@ Things that are defined include `symbol', `list', `sexp',
     (let ((v (funcall f (car lst))))
       (if v v (focus-any f (cdr lst))))))
 
-(defun focus-bounds ()
-  "Return the current bounds, based on `focus-mode-to-thing'."
+(defun focus-get-thing ()
+  "Return the current thing, based on `focus-mode-to-thing'."
   (let* ((modes (mapcar 'car focus-mode-to-thing))
-         (mode  (focus-any 'derived-mode-p modes))
-         (thing (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence)))
-    (bounds-of-thing-at-point thing)))
+         (mode  (focus-any 'derived-mode-p modes)))
+    (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence)))
+
+(defun focus-bounds ()
+  "Return the current bounds, based on `focus-get-thing'."
+  (bounds-of-thing-at-point (focus-get-thing)))
 
 (defun focus-average-colors (color &rest colors)
   "Takes an average of the colors given by argument.
