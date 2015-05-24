@@ -15,7 +15,7 @@ The package has only been tried on Emacs 24.4 and 24.5, but should work on Emacs
 
 Enable the `focus-mode` with <kbd> M-x focus-mode </kbd>.
 
-Also, `focus-read-only-mode` is provided, which is a mode optimized for continuous reading. It inhibits change in the buffer, hides the cursor and provides bindings for moving between *things* (defined in [Thing At Point](http://emacswiki.org/emacs/ThingAtPoint). One can toggle `focus-read-only-mode` with <kbd> M-x focus-read-only-mode </kbd> or <kbd> C-c C-q </kbd> if `focus-mode` is enabled.
+Also, `focus-read-only-mode` is provided, which is a mode optimized for continuous reading. It inhibits change in the buffer, hides the cursor and provides bindings for moving between *things* (defined in [Thing At Point](http://emacswiki.org/emacs/ThingAtPoint)). One can toggle `focus-read-only-mode` with <kbd> M-x focus-read-only-mode </kbd> or <kbd> C-c C-q </kbd> if `focus-mode` is enabled.
 
 Some bindings for simple navigation and exiting `focus-read-only-mode` are provided.
 
