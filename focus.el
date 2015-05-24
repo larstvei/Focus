@@ -133,7 +133,7 @@ each command."
 (defun focus-init ()
   "This function is run when command `focus-mode' is enabled.
 
- It sets the `focus-pre-overlay' and `focus-post-overlay' to
+It sets the `focus-pre-overlay' and `focus-post-overlay' to
 overlays; these are invisible until `focus-move-focus' is run. It
 adds `focus-move-focus' to `post-command-hook'."
   (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
