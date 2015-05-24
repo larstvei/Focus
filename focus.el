@@ -183,6 +183,18 @@ when `focus-read-only-mode' is activated."
     (when (and focus-read-only-mode (not (null focus-read-only-blink-timer)))
         (setq focus-read-only-blink-timer nil)
         (setq cursor-type nil))))
+
+(defun focus-read-only-cursor-blink ()
+  "Make the cursor visible for `focus-read-only-blink-seconds'.
+This is added to the `pre-command-hook' when
+`focus-read-only-mode' is active."
+  (when (and focus-read-only-mode
+             (not (member last-command '(focus-next-thing focus-prev-thing))))
+    (when focus-read-only-blink-timer (cancel-timer focus-read-only-blink-timer))
+    (setq cursor-type t)
+    (setq focus-read-only-blink-timer
+          (run-at-time focus-read-only-blink-seconds nil
+                       'focus-read-only-hide-cursor (current-buffer)))))
 ;;;###autoload
 (define-minor-mode focus-mode
   "Dim the font color of text in surrounding sections."
