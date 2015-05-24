@@ -41,12 +41,11 @@
 (defcustom focus-dimness 0
   "Amount of dimness in out of focus sections is determined by this integer.
 
-A positive value increases the dimness of the sections. A
+A positive value increases the dimness of the sections.
+A negative value decreases the dimness.
 
-negative value decreases the dimness.
-
-The default is 0 which means a 50/50 mixture of the background and foreground
-color."
+The default is 0 which means a 50/50 mixture of the background
+and foreground color."
   :type '(integer)
   :group 'focus)
 
@@ -66,15 +65,26 @@ Things that are defined include `symbol', `list', `sexp',
   :type '(repeat symbol)
   :group 'focus)
 
+(defcustom focus-read-only-blink-seconds 1
+  "The duration of a cursor blink in `focus-read-only-mode'."
+  :type '(float)
+  :group 'focus)
+
 (defvar focus-pre-overlay nil
   "The overlay that dims the text prior to the current-point.")
 
 (defvar focus-post-overlay nil
   "The overlay that dims the text past the current-point.")
 
+(defvar focus-read-only-blink-timer nil
+  "Timer started from `focus-read-only-cursor-blink'.
+The timer calls `focus-read-only-hide-cursor' after
+`focus-read-only-blink-seconds' seconds.")
+
 ;; Use make-local-variable for backwards compatibility.
 (dolist (var '(focus-pre-overlay
-               focus-post-overlay))
+               focus-post-overlay
+               focus-read-only-blink-timer))
   (make-local-variable var))
 
 ;; Changing major-mode should not affect Focus mode.
@@ -89,17 +99,21 @@ Things that are defined include `symbol', `list', `sexp',
     (let ((v (funcall f (car lst))))
       (if v v (focus-any f (cdr lst))))))
 
-(defun focus-bounds ()
-  "Return the current bounds, based on `focus-mode-to-thing'."
+(defun focus-get-thing ()
+  "Return the current thing, based on `focus-mode-to-thing'."
   (let* ((modes (mapcar 'car focus-mode-to-thing))
-         (mode  (focus-any 'derived-mode-p modes))
-         (thing (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence)))
-    (bounds-of-thing-at-point thing)))
+         (mode  (focus-any 'derived-mode-p modes)))
+    (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence)))
+
+(defun focus-bounds ()
+  "Return the current bounds, based on `focus-get-thing'."
+  (bounds-of-thing-at-point (focus-get-thing)))
 
 (defun focus-average-colors (color &rest colors)
   "Takes an average of the colors given by argument.
-Argument COLOR is a color name, and so is COLORS; COLOR is there
-to ensure that the the function receives at least one argument."
+Argument COLOR is a color name, and so are the COLORS; COLOR is
+there to ensure that the the function receives at least one
+argument."
   (let* ((colors (cons color colors))
          (colors (mapcar 'color-name-to-rgb colors))
          (len    (length colors))
@@ -130,7 +144,7 @@ each command."
 (defun focus-init ()
   "This function is run when command `focus-mode' is enabled.
 
- It sets the `focus-pre-overlay' and `focus-post-overlay' to
+It sets the `focus-pre-overlay' and `focus-post-overlay' to
 overlays; these are invisible until `focus-move-focus' is run. It
 adds `focus-move-focus' to `post-command-hook'."
   (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
@@ -148,11 +162,73 @@ deleted, and `focus-move-focus' is removed from `post-command-hook'."
   (progn (mapc 'delete-overlay (list focus-pre-overlay focus-post-overlay))
          (remove-hook 'post-command-hook 'focus-move-focus t)))
 
+(defun focus-next-thing (&optional n)
+  "Moves the point to the middle of the Nth next thing."
+  (interactive "p")
+  (forward-thing (focus-get-thing) (+ 1 n))
+  (let ((bounds (focus-bounds)))
+    (goto-char (/ (+ (car bounds) (cdr bounds)) 2)))
+  (recenter nil))
+
+(defun focus-prev-thing (&optional n)
+  "Moves the point to the middle of the Nth previous thing."
+  (interactive "p")
+  (focus-next-thing (- (+ 2 n))))
+
+(defun focus-read-only-hide-cursor (&optional buffer)
+  "Hide the cursor.
+This function is triggered by the `focus-read-only-blink-timer',
+when `focus-read-only-mode' is activated."
+  (with-current-buffer (or buffer (current-buffer))
+    (when (and focus-read-only-mode (not (null focus-read-only-blink-timer)))
+        (setq focus-read-only-blink-timer nil)
+        (setq cursor-type nil))))
+
+(defun focus-read-only-cursor-blink ()
+  "Make the cursor visible for `focus-read-only-blink-seconds'.
+This is added to the `pre-command-hook' when
+`focus-read-only-mode' is active."
+  (when (and focus-read-only-mode
+             (not (member last-command '(focus-next-thing focus-prev-thing))))
+    (when focus-read-only-blink-timer (cancel-timer focus-read-only-blink-timer))
+    (setq cursor-type t)
+    (setq focus-read-only-blink-timer
+          (run-at-time focus-read-only-blink-seconds nil
+                       'focus-read-only-hide-cursor (current-buffer)))))
+
+(defun turn-off-focus-read-only-mode ()
+  "Turn off `focus-read-only-mode'."
+  (interactive)
+  (focus-read-only-mode -1))
+
 ;;;###autoload
 (define-minor-mode focus-mode
   "Dim the font color of text in surrounding sections."
   :init-value nil
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "C-c C-q") 'focus-read-only-mode)
+            map)
   (if focus-mode (focus-init) (focus-terminate)))
+
+;;;###autoload
+(define-minor-mode focus-read-only-mode
+  "A read-only mode optimized for `focus-mode'."
+  :init-value nil
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "n") 'focus-next-thing)
+            (define-key map (kbd "SPC") 'focus-next-thing)
+            (define-key map (kbd "p") 'focus-prev-thing)
+            (define-key map (kbd "S-SPC") 'focus-prev-thing)
+            (define-key map (kbd "i") 'turn-off-focus-read-only-mode)
+            (define-key map (kbd "q") 'turn-off-focus-read-only-mode)
+            map)
+  (read-only-mode (if focus-read-only-mode 1 -1))
+  (when focus-read-only-blink-timer (cancel-timer focus-read-only-blink-timer))
+  (setq cursor-type (not focus-read-only-mode))
+  (setq focus-read-only-blink-timer nil)
+  (remove-hook 'pre-command-hook 'focus-read-only-cursor-blink t)
+  (when focus-read-only-mode
+    (add-hook 'pre-command-hook 'focus-read-only-cursor-blink nil t)))
 
 (provide 'focus)
 ;;; focus.el ends here
