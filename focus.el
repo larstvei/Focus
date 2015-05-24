@@ -197,6 +197,28 @@ This is added to the `pre-command-hook' when
           (run-at-time focus-read-only-blink-seconds nil
                        'focus-read-only-hide-cursor (current-buffer)))))
 
+(defun focus-read-only-init ()
+  "Run when `focus-read-only-mode' is activated.
+Enables `read-only-mode', hides the cursor and adds
+`focus-read-only-cursor-blink' to `pre-command-hook'. Also
+`focus-read-only-terminate' is added to the `kill-buffer-hook'."
+  (read-only-mode 1)
+  (setq cursor-type nil)
+  (add-hook 'pre-command-hook 'focus-read-only-cursor-blink nil t)
+  (add-hook 'kill-buffer-hook 'focus-read-only-terminate t))
+
+(defun focus-read-only-terminate ()
+  "Run when `focus-read-only-mode' is deactivated.
+Disables `read-only-mode' and shows the cursor again. It cleans
+up the `focus-read-only-blink-timer' and hooks."
+  (read-only-mode -1)
+  (setq cursor-type t)
+  (when focus-read-only-blink-timer
+    (cancel-timer focus-read-only-blink-timer))
+  (setq focus-read-only-blink-timer nil)
+  (remove-hook 'pre-command-hook 'focus-read-only-cursor-blink t)
+  (remove-hook 'kill-buffer-hook 'focus-read-only-terminate t))
+
 (defun turn-off-focus-read-only-mode ()
   "Turn off `focus-read-only-mode'."
   (interactive)
@@ -223,13 +245,7 @@ This is added to the `pre-command-hook' when
             (define-key map (kbd "i") 'turn-off-focus-read-only-mode)
             (define-key map (kbd "q") 'turn-off-focus-read-only-mode)
             map)
-  (read-only-mode (if focus-read-only-mode 1 -1))
-  (when focus-read-only-blink-timer (cancel-timer focus-read-only-blink-timer))
-  (setq cursor-type (not focus-read-only-mode))
-  (setq focus-read-only-blink-timer nil)
-  (remove-hook 'pre-command-hook 'focus-read-only-cursor-blink t)
-  (when focus-read-only-mode
-    (add-hook 'pre-command-hook 'focus-read-only-cursor-blink nil t)))
+  (if focus-read-only-mode (focus-read-only-init) (focus-read-only-terminate)))
 
 (provide 'focus)
 ;;; focus.el ends here
