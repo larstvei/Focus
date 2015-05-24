@@ -65,15 +65,26 @@ Things that are defined include `symbol', `list', `sexp',
   :type '(repeat symbol)
   :group 'focus)
 
+(defcustom focus-read-only-blink-seconds 1
+  "The duration of a cursor blink in `focus-read-only-mode'."
+  :type '(float)
+  :group 'focus)
+
 (defvar focus-pre-overlay nil
   "The overlay that dims the text prior to the current-point.")
 
 (defvar focus-post-overlay nil
   "The overlay that dims the text past the current-point.")
 
+(defvar focus-read-only-blink-timer nil
+  "Timer started from `focus-read-only-cursor-blink'.
+The timer calls `focus-read-only-hide-cursor' after
+`focus-read-only-blink-seconds' seconds.")
+
 ;; Use make-local-variable for backwards compatibility.
 (dolist (var '(focus-pre-overlay
-               focus-post-overlay))
+               focus-post-overlay
+               focus-read-only-blink-timer))
   (make-local-variable var))
 
 ;; Changing major-mode should not affect Focus mode.
