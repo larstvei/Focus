@@ -205,6 +205,9 @@ This is added to the `pre-command-hook' when
 (define-minor-mode focus-mode
   "Dim the font color of text in surrounding sections."
   :init-value nil
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "C-c C-q") 'focus-read-only-mode)
+            map)
   (if focus-mode (focus-init) (focus-terminate)))
 
 ;;;###autoload
