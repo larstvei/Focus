@@ -174,6 +174,15 @@ deleted, and `focus-move-focus' is removed from `post-command-hook'."
   "Moves the point to the middle of the Nth previous thing."
   (interactive "p")
   (focus-next-thing (- (+ 2 n))))
+
+(defun focus-read-only-hide-cursor (&optional buffer)
+  "Hide the cursor.
+This function is triggered by the `focus-read-only-blink-timer',
+when `focus-read-only-mode' is activated."
+  (with-current-buffer (or buffer (current-buffer))
+    (when (and focus-read-only-mode (not (null focus-read-only-blink-timer)))
+        (setq focus-read-only-blink-timer nil)
+        (setq cursor-type nil))))
 ;;;###autoload
 (define-minor-mode focus-mode
   "Dim the font color of text in surrounding sections."
