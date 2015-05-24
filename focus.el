@@ -162,19 +162,26 @@ deleted, and `focus-move-focus' is removed from `post-command-hook'."
   (progn (mapc 'delete-overlay (list focus-pre-overlay focus-post-overlay))
          (remove-hook 'post-command-hook 'focus-move-focus t)))
 
+(defun focus-goto-thing (bounds)
+  "Move point to the middle of BOUNDS."
+  (when bounds
+    (goto-char (/ (+ (car bounds) (cdr bounds)) 2))
+    (recenter nil)))
+
 (defun focus-next-thing (&optional n)
   "Moves the point to the middle of the Nth next thing."
   (interactive "p")
-  (forward-thing (focus-get-thing) (+ 1 n))
-  (let ((bounds (focus-bounds)))
-    (when bounds
-      (goto-char (/ (+ (car bounds) (cdr bounds)) 2))
-      (recenter nil))))
+  (let ((current-bounds (focus-bounds))
+        (thing (focus-get-thing)))
+    (forward-thing thing n)
+    (when (equal current-bounds (focus-bounds))
+      (forward-thing thing (signum n)))
+    (focus-goto-thing (focus-bounds))))
 
 (defun focus-prev-thing (&optional n)
   "Moves the point to the middle of the Nth previous thing."
   (interactive "p")
-  (focus-next-thing (- (+ 2 n))))
+  (focus-next-thing (- n)))
 
 (defun focus-read-only-hide-cursor (&optional buffer)
   "Hide the cursor.
@@ -182,8 +189,8 @@ This function is triggered by the `focus-read-only-blink-timer',
 when `focus-read-only-mode' is activated."
   (with-current-buffer (or buffer (current-buffer))
     (when (and focus-read-only-mode (not (null focus-read-only-blink-timer)))
-        (setq focus-read-only-blink-timer nil)
-        (setq cursor-type nil))))
+      (setq focus-read-only-blink-timer nil)
+      (setq cursor-type nil))))
 
 (defun focus-read-only-cursor-blink ()
   "Make the cursor visible for `focus-read-only-blink-seconds'.
