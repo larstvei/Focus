@@ -15,9 +15,9 @@ The package has only been tried on Emacs 24.4 and 24.5, but should work on Emacs
 
 Enable the `focus-mode` with <kbd> M-x focus-mode </kbd>.
 
-Also, `focus-read-only-mode` is provided, which is optimized for continuous reading. It inhibits change in the buffer, hides the cursor and provides bindings for moving between *things* (defined in [Thing At Point](http://emacswiki.org/emacs/ThingAtPoint). One can toggle `focus-read-only-mode` with <kbd> M-x focus-read-only-mode </kbd> or <kbd> C-c C-q </kbd> if `focus-mode` is enabled.
+Also, `focus-read-only-mode` is provided, which is a mode optimized for continuous reading. It inhibits change in the buffer, hides the cursor and provides bindings for moving between *things* (defined in [Thing At Point](http://emacswiki.org/emacs/ThingAtPoint). One can toggle `focus-read-only-mode` with <kbd> M-x focus-read-only-mode </kbd> or <kbd> C-c C-q </kbd> if `focus-mode` is enabled.
 
-Some bindings are provided for simple navigation and exiting `focus-read-only-mode`.
+Some bindings for simple navigation and exiting `focus-read-only-mode` are provided.
 
 Keybinding         | Description
 -------------------|----------------------------
@@ -27,6 +27,12 @@ Keybinding         | Description
 <kbd> S-SPC </kbd> | Jump to previous *thing*
 <kbd> i </kbd>     | Exit `focus-read-only-mode`
 <kbd> q </kbd>     | Exit `focus-read-only-mode`
+
+## Configuring
+
+The amount of dimness can be customized by setting the `focus-dimness` variable, where a positive integer indicates a more dim color (i.e. more blended with the background color of your theme), and a negative integer indicates a less dim color.
+
+Focus uses the [Thing At Point](http://emacswiki.org/emacs/ThingAtPoint) library to choose what section should be in focus. By default, modes derived from `prog-mode` uses `defun`, and modes derived from `text-mode` uses `sentence`. This a customizable by setting the `focus-mode-to-thing` variable, which is a list containing pairs on the form `(mode . thing)`.
 
 ### Example
 
