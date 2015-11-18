@@ -5,7 +5,7 @@
 ;; Author: Lars Tveito <larstvei@ifi.uio.no>
 ;; URL: http://github.com/larstvei/Focus
 ;; Created: 11th May 2015
-;; Version: 0.0.2
+;; Version: 0.1.0
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5"))
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -70,6 +70,9 @@ Things that are defined include `symbol', `list', `sexp',
   :type '(float)
   :group 'focus)
 
+(defvar focus-current-thing nil
+  "Overrides the choice of thing dictated by `focus-mode-to-thing' if set.")
+
 (defvar focus-pre-overlay nil
   "The overlay that dims the text prior to the current-point.")
 
@@ -82,13 +85,15 @@ The timer calls `focus-read-only-hide-cursor' after
 `focus-read-only-blink-seconds' seconds.")
 
 ;; Use make-local-variable for backwards compatibility.
-(dolist (var '(focus-pre-overlay
+(dolist (var '(focus-current-thing
+               focus-pre-overlay
                focus-post-overlay
                focus-read-only-blink-timer))
   (make-local-variable var))
 
 ;; Changing major-mode should not affect Focus mode.
-(dolist (var '(focus-pre-overlay
+(dolist (var '(focus-current-thing
+               focus-pre-overlay
                focus-post-overlay
                post-command-hook))
   (put var 'permanent-local t))
@@ -101,9 +106,10 @@ The timer calls `focus-read-only-hide-cursor' after
 
 (defun focus-get-thing ()
   "Return the current thing, based on `focus-mode-to-thing'."
-  (let* ((modes (mapcar 'car focus-mode-to-thing))
-         (mode  (focus-any 'derived-mode-p modes)))
-    (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence)))
+  (or focus-current-thing
+   (let* ((modes (mapcar 'car focus-mode-to-thing))
+          (mode  (focus-any 'derived-mode-p modes)))
+     (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence))))
 
 (defun focus-bounds ()
   "Return the current bounds, based on `focus-get-thing'."
@@ -167,6 +173,20 @@ deleted, and `focus-move-focus' is removed from `post-command-hook'."
   (when bounds
     (goto-char (/ (+ (car bounds) (cdr bounds)) 2))
     (recenter nil)))
+
+(defun focus-change-thing ()
+  "Adjust the narrowness of the focused section for the current buffer.
+
+The variable `focus-mode-to-thing' dictates the default thing
+according to major-mode. If `focus-current-thing' is set, this
+default is overwritten. This function simply helps set the
+`focus-current-thing'."
+  (interactive)
+  (let* ((candidates '(symbol list sexp defun
+                      filename url email word
+                      sentence whitespace line page))
+         (thing (completing-read "Thing: " candidates)))
+    (setq focus-current-thing (intern thing))))
 
 (defun focus-next-thing (&optional n)
   "Moves the point to the middle of the Nth next thing."
