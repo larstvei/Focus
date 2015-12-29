@@ -153,20 +153,23 @@ each command."
 It sets the `focus-pre-overlay' and `focus-post-overlay' to
 overlays; these are invisible until `focus-move-focus' is run. It
 adds `focus-move-focus' to `post-command-hook'."
-  (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
-        focus-post-overlay (make-overlay (point-max) (point-max)))
-  (let ((color (focus-make-dim-color)))
-    (mapc (lambda (o) (overlay-put o 'face (cons 'foreground-color color)))
-          (list focus-pre-overlay focus-post-overlay)))
-  (add-hook 'post-command-hook 'focus-move-focus nil t))
+  (unless (or focus-pre-overlay focus-post-overlay)
+    (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
+          focus-post-overlay (make-overlay (point-max) (point-max)))
+    (let ((color (focus-make-dim-color)))
+      (mapc (lambda (o) (overlay-put o 'face (cons 'foreground-color color)))
+            (list focus-pre-overlay focus-post-overlay)))
+    (add-hook 'post-command-hook 'focus-move-focus nil t)))
 
 (defun focus-terminate ()
   "This function is run when command `focus-mode' is disabled.
 
 The overlays pointed to by `focus-pre-overlay' and `focus-post-overlay' are
 deleted, and `focus-move-focus' is removed from `post-command-hook'."
-  (progn (mapc 'delete-overlay (list focus-pre-overlay focus-post-overlay))
-         (remove-hook 'post-command-hook 'focus-move-focus t)))
+  (mapc 'delete-overlay (list focus-pre-overlay focus-post-overlay))
+  (remove-hook 'post-command-hook 'focus-move-focus t)
+  (setq focus-pre-overlay  nil
+        focus-post-overlay nil))
 
 (defun focus-goto-thing (bounds)
   "Move point to the middle of BOUNDS."
