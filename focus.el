@@ -166,10 +166,11 @@ adds `focus-move-focus' to `post-command-hook'."
 
 The overlays pointed to by `focus-pre-overlay' and `focus-post-overlay' are
 deleted, and `focus-move-focus' is removed from `post-command-hook'."
-  (mapc 'delete-overlay (list focus-pre-overlay focus-post-overlay))
-  (remove-hook 'post-command-hook 'focus-move-focus t)
-  (setq focus-pre-overlay  nil
-        focus-post-overlay nil))
+  (when (and focus-pre-overlay focus-post-overlay)
+    (mapc 'delete-overlay (list focus-pre-overlay focus-post-overlay))
+    (remove-hook 'post-command-hook 'focus-move-focus t)
+    (setq focus-pre-overlay  nil
+          focus-post-overlay nil)))
 
 (defun focus-goto-thing (bounds)
   "Move point to the middle of BOUNDS."
@@ -261,6 +262,10 @@ up the `focus-read-only-blink-timer' and hooks."
   :keymap (let ((map (make-sparse-keymap)))
             (define-key map (kbd "C-c C-q") 'focus-read-only-mode)
             map)
+  (unless (and (color-defined-p (face-attribute 'default :background))
+               (color-defined-p (face-attribute 'default :foreground)))
+    (message "Can't enable focus mode when no theme is loaded.")
+    (setq focus-mode nil))
   (if focus-mode (focus-init) (focus-terminate)))
 
 ;;;###autoload
