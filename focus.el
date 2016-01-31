@@ -196,6 +196,21 @@ default is overwritten. This function simply helps set the
          (thing (completing-read "Thing: " candidates)))
     (setq focus-current-thing (intern thing))))
 
+(defun focus-pin ()
+  "Pin the focused section to its current location or the region,
+if active."
+  (interactive)
+  (when focus-mode
+    (when (region-active-p)
+      (focus-move-overlays (region-beginning) (region-end)))
+   (remove-hook 'post-command-hook 'focus-move-focus t)))
+
+(defun focus-unpin ()
+  "Unpin the focused section."
+  (interactive)
+  (when focus-mode
+    (add-hook 'post-command-hook 'focus-move-focus nil t)))
+
 (defun focus-next-thing (&optional n)
   "Moves the point to the middle of the Nth next thing."
   (interactive "p")
