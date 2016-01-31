@@ -138,14 +138,18 @@ argument."
                    (make-list foregrounds foreground)))))
 
 (defun focus-move-focus ()
-  "Move `focus-pre-overlay' and `focus-post-overlay'.
+  "Moves the focused section according to `focus-bounds'.
 
-If function `focus-mode' is enabled, this command fires after
-each command."
+If `focus-mode' is enabled, this command fires after each
+command."
   (let* ((bounds (focus-bounds)))
     (when bounds
-      (move-overlay focus-pre-overlay  (point-min) (car bounds))
-      (move-overlay focus-post-overlay (cdr bounds) (point-max)))))
+      (focus-move-overlays (car bounds) (cdr bounds)))))
+
+(defun focus-move-overlays (low high)
+  "Move `focus-pre-overlay' and `focus-post-overlay'."
+  (move-overlay focus-pre-overlay  (point-min) low)
+  (move-overlay focus-post-overlay high (point-max)))
 
 (defun focus-init ()
   "This function is run when command `focus-mode' is enabled.
