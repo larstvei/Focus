@@ -218,7 +218,7 @@ if active."
         (thing (focus-get-thing)))
     (forward-thing thing n)
     (when (equal current-bounds (focus-bounds))
-      (forward-thing thing (signum n)))
+      (forward-thing thing (cl-signum n)))
     (focus-goto-thing (focus-bounds))))
 
 (defun focus-prev-thing (&optional n)
