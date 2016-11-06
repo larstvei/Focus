@@ -95,8 +95,14 @@ The timer calls `focus-read-only-hide-cursor' after
 (dolist (var '(focus-current-thing
                focus-pre-overlay
                focus-post-overlay
-               post-command-hook))
+               focus-mode
+               focus-read-only-mode))
   (put var 'permanent-local t))
+
+(dolist (var '(focus-read-only-cursor-blink
+               focus-read-only-terminate
+               focus-move-focus))
+  (put var 'permanent-local-hook t))
 
 (defun focus-any (f lst)
   "Apply F to each element of LST and return first NON-NIL."
