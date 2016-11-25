@@ -100,9 +100,9 @@ The timer calls `focus-read-only-hide-cursor' after
 (defun focus-get-thing ()
   "Return the current thing, based on `focus-mode-to-thing'."
   (or focus-current-thing
-   (let* ((modes (mapcar 'car focus-mode-to-thing))
-          (mode  (focus-any 'derived-mode-p modes)))
-     (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence))))
+      (let* ((modes (mapcar 'car focus-mode-to-thing))
+             (mode  (focus-any 'derived-mode-p modes)))
+        (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence))))
 
 (defun focus-bounds ()
   "Return the current bounds, based on `focus-get-thing'."
@@ -185,8 +185,8 @@ default is overwritten. This function simply helps set the
 `focus-current-thing'."
   (interactive)
   (let* ((candidates '(symbol list sexp defun
-                      filename url email word
-                      sentence whitespace line page))
+                              filename url email word
+                              sentence whitespace line page))
          (thing (completing-read "Thing: " candidates)))
     (setq focus-current-thing (intern thing))))
 
@@ -197,7 +197,7 @@ if active."
   (when focus-mode
     (when (region-active-p)
       (focus-move-overlays (region-beginning) (region-end)))
-   (remove-hook 'post-command-hook 'focus-move-focus t)))
+    (remove-hook 'post-command-hook 'focus-move-focus t)))
 
 (defun focus-unpin ()
   "Unpin the focused section."
