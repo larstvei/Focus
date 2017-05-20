@@ -70,6 +70,9 @@ Things that are defined include `symbol', `list', `sexp',
   :type '(float)
   :group 'focus)
 
+(defvar focus-cursor-type cursor-type
+  "Used to restore the users `cursor-type'")
+
 (defvar focus-current-thing nil
   "Overrides the choice of thing dictated by `focus-mode-to-thing' if set.")
 
@@ -236,7 +239,7 @@ This is added to the `pre-command-hook' when
   (when (and focus-read-only-mode
              (not (member last-command '(focus-next-thing focus-prev-thing))))
     (when focus-read-only-blink-timer (cancel-timer focus-read-only-blink-timer))
-    (setq cursor-type t)
+    (setq cursor-type focus-cursor-type)
     (setq focus-read-only-blink-timer
           (run-at-time focus-read-only-blink-seconds nil
                        'focus-read-only-hide-cursor (current-buffer)))))
@@ -256,7 +259,7 @@ Enables `read-only-mode', hides the cursor and adds
 Disables `read-only-mode' and shows the cursor again. It cleans
 up the `focus-read-only-blink-timer' and hooks."
   (read-only-mode -1)
-  (setq cursor-type t)
+  (setq cursor-type focus-cursor-type)
   (when focus-read-only-blink-timer
     (cancel-timer focus-read-only-blink-timer))
   (setq focus-read-only-blink-timer nil)
@@ -293,6 +296,8 @@ up the `focus-read-only-blink-timer' and hooks."
             (define-key map (kbd "i") 'turn-off-focus-read-only-mode)
             (define-key map (kbd "q") 'turn-off-focus-read-only-mode)
             map)
+  (when cursor-type
+    (setq focus-cursor-type cursor-type))
   (if focus-read-only-mode (focus-read-only-init) (focus-read-only-terminate)))
 
 (provide 'focus)
