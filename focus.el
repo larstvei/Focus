@@ -76,6 +76,9 @@ Things that are defined include `symbol', `list', `sexp',
 (defvar focus-current-thing nil
   "Overrides the choice of thing dictated by `focus-mode-to-thing' if set.")
 
+(defvar focus-buffer nil
+  "Local reference to the buffer focus functions operate on.")
+
 (defvar focus-pre-overlay nil
   "The overlay that dims the text prior to the current-point.")
 
@@ -89,6 +92,7 @@ The timer calls `focus-read-only-hide-cursor' after
 
 ;; Use make-local-variable for backwards compatibility.
 (dolist (var '(focus-current-thing
+               focus-buffer
                focus-pre-overlay
                focus-post-overlay
                focus-read-only-blink-timer))
@@ -138,9 +142,10 @@ argument."
 
 If `focus-mode' is enabled, this command fires after each
 command."
-  (let* ((bounds (focus-bounds)))
-    (when bounds
-      (focus-move-overlays (car bounds) (cdr bounds)))))
+  (with-current-buffer focus-buffer
+    (let* ((bounds (focus-bounds)))
+      (when bounds
+        (focus-move-overlays (car bounds) (cdr bounds))))))
 
 (defun focus-move-overlays (low high)
   "Move `focus-pre-overlay' and `focus-post-overlay'."
@@ -155,12 +160,13 @@ overlays; these are invisible until `focus-move-focus' is run. It
 adds `focus-move-focus' to `post-command-hook'."
   (unless (or focus-pre-overlay focus-post-overlay)
     (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
-          focus-post-overlay (make-overlay (point-max) (point-max)))
+          focus-post-overlay (make-overlay (point-max) (point-max))
+          focus-buffer (current-buffer))
     (let ((color (focus-make-dim-color)))
       (mapc (lambda (o) (overlay-put o 'face (cons 'foreground-color color)))
             (list focus-pre-overlay focus-post-overlay)))
     (add-hook 'post-command-hook 'focus-move-focus nil t)
-    (add-hook 'change-major-mode-hook 'focus-terminate)))
+    (add-hook 'change-major-mode-hook 'focus-terminate nil t)))
 
 (defun focus-terminate ()
   "This function is run when command `focus-mode' is disabled.
@@ -223,11 +229,11 @@ if active."
   (interactive "p")
   (focus-next-thing (- n)))
 
-(defun focus-read-only-hide-cursor (&optional buffer)
+(defun focus-read-only-hide-cursor ()
   "Hide the cursor.
 This function is triggered by the `focus-read-only-blink-timer',
 when `focus-read-only-mode' is activated."
-  (with-current-buffer (or buffer (current-buffer))
+  (with-current-buffer focus-buffer
     (when (and focus-read-only-mode (not (null focus-read-only-blink-timer)))
       (setq focus-read-only-blink-timer nil)
       (setq cursor-type nil))))
@@ -236,13 +242,14 @@ when `focus-read-only-mode' is activated."
   "Make the cursor visible for `focus-read-only-blink-seconds'.
 This is added to the `pre-command-hook' when
 `focus-read-only-mode' is active."
-  (when (and focus-read-only-mode
-             (not (member last-command '(focus-next-thing focus-prev-thing))))
-    (when focus-read-only-blink-timer (cancel-timer focus-read-only-blink-timer))
-    (setq cursor-type focus-cursor-type)
-    (setq focus-read-only-blink-timer
-          (run-at-time focus-read-only-blink-seconds nil
-                       'focus-read-only-hide-cursor (current-buffer)))))
+  (with-current-buffer focus-buffer
+    (when (and focus-read-only-mode
+               (not (member last-command '(focus-next-thing focus-prev-thing))))
+      (when focus-read-only-blink-timer (cancel-timer focus-read-only-blink-timer))
+      (setq cursor-type focus-cursor-type)
+      (setq focus-read-only-blink-timer
+            (run-at-time focus-read-only-blink-seconds nil
+                         'focus-read-only-hide-cursor)))))
 
 (defun focus-read-only-init ()
   "Run when `focus-read-only-mode' is activated.
@@ -250,9 +257,10 @@ Enables `read-only-mode', hides the cursor and adds
 `focus-read-only-cursor-blink' to `pre-command-hook'. Also
 `focus-read-only-terminate' is added to the `kill-buffer-hook'."
   (read-only-mode 1)
-  (setq cursor-type nil)
+  (setq cursor-type nil
+        focus-buffer (current-buffer))
   (add-hook 'pre-command-hook 'focus-read-only-cursor-blink nil t)
-  (add-hook 'kill-buffer-hook 'focus-read-only-terminate t))
+  (add-hook 'kill-buffer-hook 'focus-read-only-terminate nil t))
 
 (defun focus-read-only-terminate ()
   "Run when `focus-read-only-mode' is deactivated.
