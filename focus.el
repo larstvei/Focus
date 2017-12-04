@@ -98,18 +98,12 @@ The timer calls `focus-read-only-hide-cursor' after
                focus-read-only-blink-timer))
   (make-local-variable var))
 
-(defun focus-any (f lst)
-  "Apply F to each element of LST and return first NON-NIL."
-  (when lst
-    (let ((v (funcall f (car lst))))
-      (if v v (focus-any f (cdr lst))))))
-
 (defun focus-get-thing ()
   "Return the current thing, based on `focus-mode-to-thing'."
   (or focus-current-thing
       (let* ((modes (mapcar 'car focus-mode-to-thing))
              (mode  (or (cl-find major-mode modes)
-                        (focus-any 'derived-mode-p modes))))
+                        (apply #'derived-mode-p modes))))
         (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence))))
 
 (defun focus-bounds ()
