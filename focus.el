@@ -108,7 +108,8 @@ The timer calls `focus-read-only-hide-cursor' after
   "Return the current thing, based on `focus-mode-to-thing'."
   (or focus-current-thing
       (let* ((modes (mapcar 'car focus-mode-to-thing))
-             (mode  (focus-any 'derived-mode-p modes)))
+             (mode  (or (cl-find major-mode modes)
+                        (focus-any 'derived-mode-p modes))))
         (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence))))
 
 (defun focus-bounds ()
