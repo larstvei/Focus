@@ -6,7 +6,7 @@
 ;; URL: http://github.com/larstvei/Focus
 ;; Created: 11th May 2015
 ;; Version: 0.1.1
-;; Package-Requires: ((emacs "24") (cl-lib "0.5"))
+;; Package-Requires: ((emacs "24.3") (cl-lib "0.5"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -133,7 +133,7 @@ argument."
                    (make-list foregrounds foreground)))))
 
 (defun focus-move-focus ()
-  "Moves the focused section according to `focus-bounds'.
+  "Move the focused section according to `focus-bounds'.
 
 If `focus-mode' is enabled, this command fires after each
 command."
@@ -195,10 +195,9 @@ default is overwritten. This function simply helps set the
     (setq focus-current-thing (intern thing))))
 
 (defun focus-pin ()
-  "Pin the focused section to its current location or the region,
-if active."
+  "Pin the focused section to its current location or the region, if active."
   (interactive)
-  (when focus-mode
+  (when (bound-and-true-p focus-mode)
     (when (region-active-p)
       (focus-move-overlays (region-beginning) (region-end)))
     (remove-hook 'post-command-hook 'focus-move-focus t)))
@@ -206,11 +205,11 @@ if active."
 (defun focus-unpin ()
   "Unpin the focused section."
   (interactive)
-  (when focus-mode
+  (when (bound-and-true-p focus-mode)
     (add-hook 'post-command-hook 'focus-move-focus nil t)))
 
 (defun focus-next-thing (&optional n)
-  "Moves the point to the middle of the Nth next thing."
+  "Move the point to the middle of the Nth next thing."
   (interactive "p")
   (let ((current-bounds (focus-bounds))
         (thing (focus-get-thing)))
@@ -220,7 +219,7 @@ if active."
     (focus-goto-thing (focus-bounds))))
 
 (defun focus-prev-thing (&optional n)
-  "Moves the point to the middle of the Nth previous thing."
+  "Move the point to the middle of the Nth previous thing."
   (interactive "p")
   (focus-next-thing (- n)))
 
@@ -229,7 +228,8 @@ if active."
 This function is triggered by the `focus-read-only-blink-timer',
 when `focus-read-only-mode' is activated."
   (with-current-buffer focus-buffer
-    (when (and focus-read-only-mode (not (null focus-read-only-blink-timer)))
+    (when (and (bound-and-true-p focus-read-only-mode)
+               (not (null focus-read-only-blink-timer)))
       (setq focus-read-only-blink-timer nil)
       (setq cursor-type nil))))
 
@@ -238,7 +238,7 @@ when `focus-read-only-mode' is activated."
 This is added to the `pre-command-hook' when
 `focus-read-only-mode' is active."
   (with-current-buffer focus-buffer
-    (when (and focus-read-only-mode
+    (when (and (bound-and-true-p focus-read-only-mode)
                (not (member last-command '(focus-next-thing focus-prev-thing))))
       (when focus-read-only-blink-timer (cancel-timer focus-read-only-blink-timer))
       (setq cursor-type focus-cursor-type)
@@ -249,8 +249,8 @@ This is added to the `pre-command-hook' when
 (defun focus-read-only-init ()
   "Run when `focus-read-only-mode' is activated.
 Enables `read-only-mode', hides the cursor and adds
-`focus-read-only-cursor-blink' to `pre-command-hook'. Also
-`focus-read-only-terminate' is added to the `kill-buffer-hook'."
+`focus-read-only-cursor-blink' to `pre-command-hook'.
+Also `focus-read-only-terminate' is added to the `kill-buffer-hook'."
   (read-only-mode 1)
   (setq cursor-type nil
         focus-buffer (current-buffer))
@@ -259,8 +259,8 @@ Enables `read-only-mode', hides the cursor and adds
 
 (defun focus-read-only-terminate ()
   "Run when `focus-read-only-mode' is deactivated.
-Disables `read-only-mode' and shows the cursor again. It cleans
-up the `focus-read-only-blink-timer' and hooks."
+Disables `read-only-mode' and shows the cursor again.
+It cleans up the `focus-read-only-blink-timer' and hooks."
   (read-only-mode -1)
   (setq cursor-type focus-cursor-type)
   (when focus-read-only-blink-timer
@@ -269,7 +269,7 @@ up the `focus-read-only-blink-timer' and hooks."
   (remove-hook 'pre-command-hook 'focus-read-only-cursor-blink t)
   (remove-hook 'kill-buffer-hook 'focus-read-only-terminate t))
 
-(defun turn-off-focus-read-only-mode ()
+(defun focus-turn-off-focus-read-only-mode ()
   "Turn off `focus-read-only-mode'."
   (interactive)
   (focus-read-only-mode -1))
@@ -296,8 +296,8 @@ up the `focus-read-only-blink-timer' and hooks."
             (define-key map (kbd "SPC") 'focus-next-thing)
             (define-key map (kbd "p") 'focus-prev-thing)
             (define-key map (kbd "S-SPC") 'focus-prev-thing)
-            (define-key map (kbd "i") 'turn-off-focus-read-only-mode)
-            (define-key map (kbd "q") 'turn-off-focus-read-only-mode)
+            (define-key map (kbd "i") 'focus-turn-off-focus-read-only-mode)
+            (define-key map (kbd "q") 'focus-turn-off-focus-read-only-mode)
             map)
   (when cursor-type
     (setq focus-cursor-type cursor-type))
