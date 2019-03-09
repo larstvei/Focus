@@ -6,7 +6,7 @@
 ;; URL: http://github.com/larstvei/Focus
 ;; Created: 11th May 2015
 ;; Version: 0.1.1
-;; Package-Requires: ((emacs "24") (cl-lib "0.5"))
+;; Package-Requires: ((emacs "24.3") (cl-lib "0.5"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -270,7 +270,7 @@ up the `focus-read-only-blink-timer' and hooks."
   (remove-hook 'pre-command-hook 'focus-read-only-cursor-blink t)
   (remove-hook 'kill-buffer-hook 'focus-read-only-terminate t))
 
-(defun turn-off-focus-read-only-mode ()
+(defun focus-turn-off-focus-read-only-mode ()
   "Turn off `focus-read-only-mode'."
   (interactive)
   (focus-read-only-mode -1))
@@ -297,8 +297,8 @@ up the `focus-read-only-blink-timer' and hooks."
             (define-key map (kbd "SPC") 'focus-next-thing)
             (define-key map (kbd "p") 'focus-prev-thing)
             (define-key map (kbd "S-SPC") 'focus-prev-thing)
-            (define-key map (kbd "i") 'turn-off-focus-read-only-mode)
-            (define-key map (kbd "q") 'turn-off-focus-read-only-mode)
+            (define-key map (kbd "i") 'focus-turn-off-focus-read-only-mode)
+            (define-key map (kbd "q") 'focus-turn-off-focus-read-only-mode)
             map)
   (when cursor-type
     (setq focus-cursor-type cursor-type))
