@@ -198,7 +198,7 @@ default is overwritten. This function simply helps set the
   "Pin the focused section to its current location or the region,
 if active."
   (interactive)
-  (when focus-mode
+  (when (bound-and-true-p focus-mode)
     (when (region-active-p)
       (focus-move-overlays (region-beginning) (region-end)))
     (remove-hook 'post-command-hook 'focus-move-focus t)))
@@ -206,7 +206,7 @@ if active."
 (defun focus-unpin ()
   "Unpin the focused section."
   (interactive)
-  (when focus-mode
+  (when (bound-and-true-p focus-mode)
     (add-hook 'post-command-hook 'focus-move-focus nil t)))
 
 (defun focus-next-thing (&optional n)
@@ -229,7 +229,8 @@ if active."
 This function is triggered by the `focus-read-only-blink-timer',
 when `focus-read-only-mode' is activated."
   (with-current-buffer focus-buffer
-    (when (and focus-read-only-mode (not (null focus-read-only-blink-timer)))
+    (when (and (bound-and-true-p focus-read-only-mode)
+               (not (null focus-read-only-blink-timer)))
       (setq focus-read-only-blink-timer nil)
       (setq cursor-type nil))))
 
@@ -238,7 +239,7 @@ when `focus-read-only-mode' is activated."
 This is added to the `pre-command-hook' when
 `focus-read-only-mode' is active."
   (with-current-buffer focus-buffer
-    (when (and focus-read-only-mode
+    (when (and (bound-and-true-p focus-read-only-mode)
                (not (member last-command '(focus-next-thing focus-prev-thing))))
       (when focus-read-only-blink-timer (cancel-timer focus-read-only-blink-timer))
       (setq cursor-type focus-cursor-type)
