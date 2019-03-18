@@ -73,30 +73,22 @@ Things that are defined include `symbol', `list', `sexp',
 (defvar focus-cursor-type cursor-type
   "Used to restore the users `cursor-type'")
 
-(defvar focus-current-thing nil
+(defvar-local focus-current-thing nil
   "Overrides the choice of thing dictated by `focus-mode-to-thing' if set.")
 
-(defvar focus-buffer nil
+(defvar-local focus-buffer nil
   "Local reference to the buffer focus functions operate on.")
 
-(defvar focus-pre-overlay nil
+(defvar-local focus-pre-overlay nil
   "The overlay that dims the text prior to the current-point.")
 
-(defvar focus-post-overlay nil
+(defvar-local focus-post-overlay nil
   "The overlay that dims the text past the current-point.")
 
-(defvar focus-read-only-blink-timer nil
+(defvar-local focus-read-only-blink-timer nil
   "Timer started from `focus-read-only-cursor-blink'.
 The timer calls `focus-read-only-hide-cursor' after
 `focus-read-only-blink-seconds' seconds.")
-
-;; Use make-local-variable for backwards compatibility.
-(dolist (var '(focus-current-thing
-               focus-buffer
-               focus-pre-overlay
-               focus-post-overlay
-               focus-read-only-blink-timer))
-  (make-local-variable var))
 
 (defun focus-get-thing ()
   "Return the current thing, based on `focus-mode-to-thing'."
