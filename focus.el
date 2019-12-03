@@ -59,11 +59,18 @@ Things that are defined include `symbol', `list', `sexp',
   :type '(float)
   :group 'focus)
 
+(defcustom focus-unfocused-face 'font-lock-comment-face
+  "The face that overlays the unfocused area."
+  :type '(face)
+  :group 'focus)
+
+(defcustom focus-focused-face nil
+  "The face that overlays the focused area."
+  :type '(face)
+  :group 'focus)
+
 (defvar focus-cursor-type cursor-type
   "Used to restore the users `cursor-type'")
-
-(defvar focus-unfocused-face font-lock-comment-face
-  "Overrides the color used for dimmed text.")
 
 (defvar-local focus-current-thing nil
   "Overrides the choice of thing dictated by `focus-mode-to-thing' if set.")
@@ -73,6 +80,9 @@ Things that are defined include `symbol', `list', `sexp',
 
 (defvar-local focus-pre-overlay nil
   "The overlay that dims the text prior to the current-point.")
+
+(defvar-local focus-mid-overlay nil
+  "The overlay that surrounds the text of the current-point.")
 
 (defvar-local focus-post-overlay nil
   "The overlay that dims the text past the current-point.")
@@ -105,20 +115,24 @@ command."
         (focus-move-overlays (car bounds) (cdr bounds))))))
 
 (defun focus-move-overlays (low high)
-  "Move `focus-pre-overlay' and `focus-post-overlay'."
-  (move-overlay focus-pre-overlay  (point-min) low)
+  "Move `focus-pre-overlay', `focus-mid-overlay' and `focus-post-overlay'."
+  (move-overlay focus-pre-overlay (point-min) low)
+  (move-overlay focus-mid-overlay low high)
   (move-overlay focus-post-overlay high (point-max)))
 
 (defun focus-init ()
   "This function is run when command `focus-mode' is enabled.
 
-It sets the `focus-pre-overlay' and `focus-post-overlay' to
-overlays; these are invisible until `focus-move-focus' is run. It
-adds `focus-move-focus' to `post-command-hook'."
+It sets the `focus-pre-overlay', `focus-min-overlay', and
+`focus-post-overlay' to overlays; these are invisible until
+`focus-move-focus' is run. It adds `focus-move-focus' to
+`post-command-hook'."
   (unless (or focus-pre-overlay focus-post-overlay)
     (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
+          focus-mid-overlay  (make-overlay (point-min) (point-max))
           focus-post-overlay (make-overlay (point-max) (point-max))
           focus-buffer (current-buffer))
+    (overlay-put focus-mid-overlay 'face focus-focused-face)
     (mapc (lambda (o) (overlay-put o 'face focus-unfocused-face))
           (list focus-pre-overlay focus-post-overlay))
     (add-hook 'post-command-hook 'focus-move-focus nil t)
@@ -127,12 +141,15 @@ adds `focus-move-focus' to `post-command-hook'."
 (defun focus-terminate ()
   "This function is run when command `focus-mode' is disabled.
 
-The overlays pointed to by `focus-pre-overlay' and `focus-post-overlay' are
-deleted, and `focus-move-focus' is removed from `post-command-hook'."
+The overlays pointed to by `focus-pre-overlay',
+`focus-mid-overlay' and `focus-post-overlay' are deleted, and
+`focus-move-focus' is removed from `post-command-hook'."
   (when (and focus-pre-overlay focus-post-overlay)
-    (mapc 'delete-overlay (list focus-pre-overlay focus-post-overlay))
+    (mapc 'delete-overlay
+          (list focus-pre-overlay focus-mid-overlay focus-post-overlay))
     (remove-hook 'post-command-hook 'focus-move-focus t)
-    (setq focus-pre-overlay  nil
+    (setq focus-pre-overlay nil
+          focus-mid-overlay nil
           focus-post-overlay nil)))
 
 (defun focus-goto-thing (bounds)
