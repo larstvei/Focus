@@ -59,14 +59,13 @@ Things that are defined include `symbol', `list', `sexp',
   :type '(float)
   :group 'focus)
 
-(defcustom focus-unfocused-face 'font-lock-comment-face
+(defface focus-unfocused-face
+  '((t :inherit font-lock-comment-face))
   "The face that overlays the unfocused area."
-  :type '(face)
   :group 'focus)
 
-(defcustom focus-focused-face nil
+(defface focus-focused-face nil
   "The face that overlays the focused area."
-  :type '(face)
   :group 'focus)
 
 (defvar focus-cursor-type cursor-type
@@ -132,8 +131,8 @@ It sets the `focus-pre-overlay', `focus-min-overlay', and
           focus-mid-overlay  (make-overlay (point-min) (point-max))
           focus-post-overlay (make-overlay (point-max) (point-max))
           focus-buffer (current-buffer))
-    (overlay-put focus-mid-overlay 'face focus-focused-face)
-    (mapc (lambda (o) (overlay-put o 'face focus-unfocused-face))
+    (overlay-put focus-mid-overlay 'face 'focus-focused-face)
+    (mapc (lambda (o) (overlay-put o 'face 'focus-unfocused-face))
           (list focus-pre-overlay focus-post-overlay))
     (add-hook 'post-command-hook 'focus-move-focus nil t)
     (add-hook 'change-major-mode-hook 'focus-terminate nil t)))
