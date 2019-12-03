@@ -73,6 +73,9 @@ Things that are defined include `symbol', `list', `sexp',
 (defvar focus-cursor-type cursor-type
   "Used to restore the users `cursor-type'")
 
+(defvar focus-dim-color nil
+  "Overrides the color used for dimmed text.")
+
 (defvar-local focus-current-thing nil
   "Overrides the choice of thing dictated by `focus-mode-to-thing' if set.")
 
@@ -149,7 +152,7 @@ adds `focus-move-focus' to `post-command-hook'."
     (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
           focus-post-overlay (make-overlay (point-max) (point-max))
           focus-buffer (current-buffer))
-    (let ((color (focus-make-dim-color)))
+    (let ((color (or focus-dim-color (focus-make-dim-color))))
       (mapc (lambda (o) (overlay-put o 'face (cons 'foreground-color color)))
             (list focus-pre-overlay focus-post-overlay)))
     (add-hook 'post-command-hook 'focus-move-focus nil t)
@@ -273,9 +276,10 @@ It cleans up the `focus-read-only-blink-timer' and hooks."
   :keymap (let ((map (make-sparse-keymap)))
             (define-key map (kbd "C-c C-q") 'focus-read-only-mode)
             map)
-  (unless (and (color-defined-p (face-attribute 'default :background))
-               (color-defined-p (face-attribute 'default :foreground)))
-    (message "Can't enable focus mode when no theme is loaded.")
+  (unless (or (and (color-defined-p (face-attribute 'default :background))
+                   (color-defined-p (face-attribute 'default :foreground)))
+              focus-dim-color)
+    (message "Can't enable focus mode when no theme is loaded. Try setting focus-dim-color!")
     (setq focus-mode nil))
   (if focus-mode (focus-init) (focus-terminate)))
 
