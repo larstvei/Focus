@@ -165,9 +165,7 @@ according to major-mode. If `focus-current-thing' is set, this
 default is overwritten. This function simply helps set the
 `focus-current-thing'."
   (interactive)
-  (let* ((candidates '(symbol list sexp defun
-                              filename url email word
-                              sentence whitespace line page))
+  (let* ((candidates '(defun line list paragraph sentence sexp symbol word))
          (thing (completing-read "Thing: " candidates)))
     (setq focus-current-thing (intern thing))))
 
