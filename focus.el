@@ -59,12 +59,12 @@ Things that are defined include `symbol', `list', `sexp',
   :type '(float)
   :group 'focus)
 
-(defface focus-unfocused-face
+(defface focus-unfocused
   '((t :inherit font-lock-comment-face))
   "The face that overlays the unfocused area."
   :group 'focus)
 
-(defface focus-focused-face nil
+(defface focus-focused nil
   "The face that overlays the focused area."
   :group 'focus)
 
