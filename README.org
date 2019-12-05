@@ -23,13 +23,13 @@
 
   A few interactive functions are provided:
 
-  | Function           | Description                                                              |
-  |--------------------+--------------------------------------------------------------------------|
-  | focus-change-thing | Adjust the narrowness of the focused section for the current buffer      |
-  | focus-pin          | Pin the focused section to its current location or the region, if active |
-  | focus-unpin        | Unpin the focused section                                                |
-  | focus-next-thing   | Move the point to the middle of the Nth next thing                       |
-  | focus-prev-thing   | Move the point to the middle of the Nth previous thing                   |
+  | Function             | Description                                                              |
+  |----------------------+--------------------------------------------------------------------------|
+  | ~focus-change-thing~ | Adjust the narrowness of the focused section for the current buffer      |
+  | ~focus-pin~          | Pin the focused section to its current location or the region, if active |
+  | ~focus-unpin~        | Unpin the focused section                                                |
+  | ~focus-next-thing~   | Move the point to the middle of the Nth next thing                       |
+  | ~focus-prev-thing~   | Move the point to the middle of the Nth previous thing                   |
 
   Focus relies on [[https://www.emacswiki.org/emacs/ThingAtPoint][Thing At Point]], which can retrieve a /thing/ surrounding the
   point. These /things/ may be a symbol, list, S-expression (sexp), function
