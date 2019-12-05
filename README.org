@@ -39,9 +39,9 @@
 
 ** Focus read-only mode
 
-   Enable ~focus-read-only-mode~ with ~M-x focus-read-only-mode~, which is
-   optimized for continuous reading. It inhibits changes in a buffer, hides the
-   cursor and provides bindings for moving between /things/.
+   Enable ~focus-read-only-mode~ with ~M-x focus-read-only-mode~. It inhibits
+   changes in a buffer, hides the cursor and provides bindings for moving
+   between /things/.
 
    Some bindings for simple navigation and exiting `focus-read-only-mode` are
    provided.
