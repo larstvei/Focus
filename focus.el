@@ -31,6 +31,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'org-element)
 (require 'thingatpt)
 
 (defgroup focus ()
@@ -38,7 +39,9 @@
   :group 'font-lock
   :prefix "focus-")
 
-(defcustom focus-mode-to-thing '((prog-mode . defun) (text-mode . sentence))
+(defcustom focus-mode-to-thing '((prog-mode . defun)
+                                 (text-mode . paragraph)
+                                 (org-mode . org-element))
   "An associated list between mode and thing.
 
 A thing is defined in thingatpt.el; the thing determines the
@@ -101,7 +104,13 @@ The timer calls `focus-read-only-hide-cursor' after
 
 (defun focus-bounds ()
   "Return the current bounds, based on `focus-get-thing'."
-  (bounds-of-thing-at-point (focus-get-thing)))
+  (let ((thing (focus-get-thing)))
+    (cond ((eq thing 'org-element)
+           (let* ((elem (org-element-at-point))
+                  (beg (org-element-property :begin elem))
+                  (end (org-element-property :end elem)))
+             (cons beg end)))
+          (t (bounds-of-thing-at-point (focus-get-thing))))))
 
 (defun focus-move-focus ()
   "Move the focused section according to `focus-bounds'.
@@ -165,7 +174,7 @@ according to major-mode. If `focus-current-thing' is set, this
 default is overwritten. This function simply helps set the
 `focus-current-thing'."
   (interactive)
-  (let* ((candidates '(defun line list paragraph sentence sexp symbol word))
+  (let* ((candidates '(defun line list org-element paragraph sentence sexp symbol word))
          (thing (completing-read "Thing: " candidates)))
     (setq focus-current-thing (intern thing))))
 
