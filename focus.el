@@ -31,6 +31,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'face-remap)
 (require 'org-element)
 (require 'thingatpt)
 
@@ -62,8 +63,12 @@ Things that are defined include `symbol', `list', `sexp',
   :type '(float)
   :group 'focus)
 
-(defface focus-unfocused
-  '((t :inherit font-lock-comment-face))
+(defcustom focus-fraction 0.5
+  "Determines the amount of dimness in out of focus sections (0.0 – 1.0)."
+  :type '(float)
+  :group 'focus)
+
+(defface focus-unfocused nil
   "The face that overlays the unfocused area."
   :group 'focus)
 
@@ -83,16 +88,68 @@ Things that are defined include `symbol', `list', `sexp',
 (defvar-local focus-pre-overlay nil
   "The overlay that dims the text prior to the current-point.")
 
-(defvar-local focus-mid-overlay nil
-  "The overlay that surrounds the text of the current-point.")
-
 (defvar-local focus-post-overlay nil
   "The overlay that dims the text past the current-point.")
+
+(defvar-local focus-mid-overlays nil)
+
+(defvar-local focus-remap-cookies nil)
+
+(defvar-local focus-last-bounds nil)
+
+(defvar-local focus-last-background nil)
 
 (defvar-local focus-read-only-blink-timer nil
   "Timer started from `focus-read-only-cursor-blink'.
 The timer calls `focus-read-only-hide-cursor' after
 `focus-read-only-blink-seconds' seconds.")
+
+(defun focus-lerp (c1 c2 d)
+  (apply 'color-rgb-to-hex
+         (cl-mapcar (lambda (x y) (+ (* x (- 1 d)) (* y d))) c1 c2)))
+
+(defun focus-remap-foreground-color-from-face (face)
+  (let ((fg (face-foreground face))
+        (bg (face-background 'default)))
+    (when (and fg bg (color-defined-p fg) (color-defined-p bg))
+      (let* ((new-fg (focus-lerp (color-name-to-rgb fg)
+                                 (color-name-to-rgb bg)
+                                 focus-fraction))
+             (cookie (face-remap-add-relative face `(:foreground ,new-fg))))
+        (push cookie focus-remap-cookies)))))
+
+(defun focus-dim-buffer ()
+  ;; Most faces that alters the background are better left undimmed. The
+  ;; default face is, however, a clear exception.
+  (focus-remap-foreground-color-from-face 'default)
+  (dolist (face (face-list))
+    (when (and (not (face-background face))
+               (face-foreground face))
+      (focus-remap-foreground-color-from-face face))))
+
+(defun focus-reset-remapping ()
+  (while focus-remap-cookies
+    (face-remap-remove-relative
+     (pop focus-remap-cookies))))
+
+(defun focus-make-focused-face (fg)
+  (plist-put (face-attr-construct 'focus-focused) :foreground fg))
+
+(defun focus-undim-area (low high)
+  (mapc 'delete-overlay focus-mid-overlays)
+  (setq focus-mid-overlays nil)
+  (save-excursion
+    (dotimes (i (- high low))
+      (goto-char (+ low i))
+      (let* ((prev (car focus-mid-overlays))
+             (fg (foreground-color-at-point))
+             (restored-face (focus-make-focused-face fg)))
+        (if (and (overlayp prev)
+                 (equal restored-face (overlay-get prev 'face)))
+            (move-overlay prev (overlay-start prev) (1+ (overlay-end prev)))
+          (let ((o (make-overlay (+ low i) (+ low i 1))))
+            (overlay-put o 'face restored-face)
+            (push o focus-mid-overlays)))))))
 
 (defun focus-get-thing ()
   "Return the current thing, based on `focus-mode-to-thing'."
@@ -110,7 +167,7 @@ The timer calls `focus-read-only-hide-cursor' after
                   (beg (org-element-property :begin elem))
                   (end (org-element-property :end elem)))
              (cons beg end)))
-          (t (bounds-of-thing-at-point (focus-get-thing))))))
+          (t (bounds-of-thing-at-point thing)))))
 
 (defun focus-move-focus ()
   "Move the focused section according to `focus-bounds'.
@@ -118,47 +175,57 @@ The timer calls `focus-read-only-hide-cursor' after
 If `focus-mode' is enabled, this command fires after each
 command."
   (with-current-buffer focus-buffer
-    (let* ((bounds (focus-bounds)))
-      (when bounds
-        (focus-move-overlays (car bounds) (cdr bounds))))))
+    (let* ((bounds (focus-bounds))
+           (bg (face-background 'default)))
+      (when (not (equal focus-last-background bg))
+        (focus-dim-buffer))
+      (when (and bounds
+                 (or (not (equal bg focus-last-background))
+                     (not (equal bounds focus-last-bounds))))
+        (let ((low (car bounds))
+              (high (cdr bounds)))
+          (focus-move-overlays low high)
+          (focus-undim-area low high)))
+      (setq focus-last-bounds bounds)
+      (setq focus-last-background bg))))
 
 (defun focus-move-overlays (low high)
-  "Move `focus-pre-overlay', `focus-mid-overlay' and `focus-post-overlay'."
+  "Move `focus-pre-overlay' and `focus-post-overlay'."
   (move-overlay focus-pre-overlay (point-min) low)
-  (move-overlay focus-mid-overlay low high)
   (move-overlay focus-post-overlay high (point-max)))
 
 (defun focus-init ()
-  "This function is run when command `focus-mode' is enabled.
+  "This function runs when `focus-mode' is enabled.
 
 It sets the `focus-pre-overlay', `focus-min-overlay', and
 `focus-post-overlay' to overlays; these are invisible until
-`focus-move-focus' is run. It adds `focus-move-focus' to
+`focus-move-focus' runs. It adds `focus-move-focus' to
 `post-command-hook'."
   (unless (or focus-pre-overlay focus-post-overlay)
-    (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
-          focus-mid-overlay  (make-overlay (point-min) (point-max))
+    (setq focus-pre-overlay (make-overlay (point-min) (point-min))
           focus-post-overlay (make-overlay (point-max) (point-max))
           focus-buffer (current-buffer))
-    (overlay-put focus-mid-overlay 'face 'focus-focused)
-    (mapc (lambda (o) (overlay-put o 'face 'focus-unfocused))
-          (list focus-pre-overlay focus-post-overlay))
-    (add-hook 'post-command-hook 'focus-move-focus nil t)
-    (add-hook 'change-major-mode-hook 'focus-terminate nil t)))
+    (overlay-put focus-pre-overlay 'face 'focus-unfocused)
+    (overlay-put focus-post-overlay 'face 'focus-unfocused)
+    (add-hook 'post-command-hook 'focus-move-focus t t)
+    (add-hook 'change-major-mode-hook 'focus-terminate t t)
+    (focus-move-focus)))
 
 (defun focus-terminate ()
   "This function is run when command `focus-mode' is disabled.
 
-The overlays pointed to by `focus-pre-overlay',
-`focus-mid-overlay' and `focus-post-overlay' are deleted, and
-`focus-move-focus' is removed from `post-command-hook'."
-  (when (and focus-pre-overlay focus-post-overlay)
-    (mapc 'delete-overlay
-          (list focus-pre-overlay focus-mid-overlay focus-post-overlay))
+Overlays are deleted. `focus-move-focus' is removed from
+`post-command-hook'."
+  (let ((overlays (append (list focus-pre-overlay
+                                focus-post-overlay)
+                          focus-mid-overlays)))
+    (mapc (lambda (o) (and (overlayp o) (delete-overlay o))) overlays)
     (remove-hook 'post-command-hook 'focus-move-focus t)
+    (focus-reset-remapping)
     (setq focus-pre-overlay nil
-          focus-mid-overlay nil
-          focus-post-overlay nil)))
+          focus-post-overlay nil
+          focus-last-bounds nil
+          focus-last-background nil)))
 
 (defun focus-goto-thing (bounds)
   "Move point to the middle of BOUNDS."
