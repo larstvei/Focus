@@ -91,13 +91,17 @@ Things that are defined include `symbol', `list', `sexp',
 (defvar-local focus-post-overlay nil
   "The overlay that dims the text past the current-point.")
 
-(defvar-local focus-mid-overlays nil)
+(defvar-local focus-mid-overlays nil
+  "These overlays restore original colors in the focused area.")
 
-(defvar-local focus-remap-cookies nil)
+(defvar-local focus-remap-cookies nil
+  "A list of cookies used for deleting the face remapping.")
 
-(defvar-local focus-last-bounds nil)
+(defvar-local focus-last-bounds nil
+  "Used to identify changes in `focus-bounds'.")
 
-(defvar-local focus-last-background nil)
+(defvar-local focus-last-background nil
+  "Used to identify changes in the background.")
 
 (defvar-local focus-read-only-blink-timer nil
   "Timer started from `focus-read-only-cursor-blink'.
@@ -105,10 +109,12 @@ The timer calls `focus-read-only-hide-cursor' after
 `focus-read-only-blink-seconds' seconds.")
 
 (defun focus-lerp (c1 c2 d)
+  "Interpolate C1 with C2, where D controls the amount."
   (apply 'color-rgb-to-hex
          (cl-mapcar (lambda (x y) (+ (* x (- 1 d)) (* y d))) c1 c2)))
 
 (defun focus-remap-foreground-color-from-face (face)
+  "Remap the foreground color of FACE to a dimmed color."
   (let ((fg (face-foreground face))
         (bg (face-background 'default)))
     (when (and fg bg (color-defined-p fg) (color-defined-p bg))
@@ -118,24 +124,32 @@ The timer calls `focus-read-only-hide-cursor' after
              (cookie (face-remap-add-relative face `(:foreground ,new-fg))))
         (push cookie focus-remap-cookies)))))
 
+(defun focus-reset-remapping ()
+  "Clean up remappings stored in `focus-remap-cookies'."
+  (while focus-remap-cookies
+    (face-remap-remove-relative
+     (pop focus-remap-cookies))))
+
 (defun focus-dim-buffer ()
+  "Dim the colors of relevant faces in the buffer."
   ;; Most faces that alters the background are better left undimmed. The
   ;; default face is, however, a clear exception.
+  (focus-reset-remapping)
   (focus-remap-foreground-color-from-face 'default)
   (dolist (face (face-list))
     (when (and (not (face-background face))
                (face-foreground face))
       (focus-remap-foreground-color-from-face face))))
 
-(defun focus-reset-remapping ()
-  (while focus-remap-cookies
-    (face-remap-remove-relative
-     (pop focus-remap-cookies))))
-
 (defun focus-make-focused-face (fg)
+  "Add original foreground color FG to the `focus-focused` face."
   (plist-put (face-attr-construct 'focus-focused) :foreground fg))
 
 (defun focus-undim-area (low high)
+  "Restore original colors in focused area.
+
+The number of overlays created is proportional to how many times
+the foreground color changes between LOW and HIGH."
   (mapc 'delete-overlay focus-mid-overlays)
   (setq focus-mid-overlays nil)
   (save-excursion
@@ -179,9 +193,8 @@ command."
            (bg (face-background 'default)))
       (when (not (equal focus-last-background bg))
         (focus-dim-buffer))
-      (when (and bounds
-                 (or (not (equal bg focus-last-background))
-                     (not (equal bounds focus-last-bounds))))
+      (when (and bounds (or (not (equal bg focus-last-background))
+                            (not (equal bounds focus-last-bounds))))
         (let ((low (car bounds))
               (high (cdr bounds)))
           (focus-move-overlays low high)
