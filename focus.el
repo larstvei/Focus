@@ -141,30 +141,6 @@ The timer calls `focus-read-only-hide-cursor' after
                (face-foreground face))
       (focus-remap-foreground-color-from-face face))))
 
-(defun focus-make-focused-face (fg)
-  "Add original foreground color FG to the `focus-focused` face."
-  (plist-put (face-attr-construct 'focus-focused) :foreground fg))
-
-(defun focus-undim-area (low high)
-  "Restore original colors in focused area.
-
-The number of overlays created is proportional to how many times
-the foreground color changes between LOW and HIGH."
-  (mapc 'delete-overlay focus-mid-overlays)
-  (setq focus-mid-overlays nil)
-  (save-excursion
-    (dotimes (i (- high low))
-      (goto-char (+ low i))
-      (let* ((prev (car focus-mid-overlays))
-             (fg (foreground-color-at-point))
-             (restored-face (focus-make-focused-face fg)))
-        (if (and (overlayp prev)
-                 (equal restored-face (overlay-get prev 'face)))
-            (move-overlay prev (overlay-start prev) (1+ (overlay-end prev)))
-          (let ((o (make-overlay (+ low i) (+ low i 1))))
-            (overlay-put o 'face restored-face)
-            (push o focus-mid-overlays)))))))
-
 (defun focus-get-thing ()
   "Return the current thing, based on `focus-mode-to-thing'."
   (or focus-current-thing
@@ -183,6 +159,28 @@ the foreground color changes between LOW and HIGH."
              (cons beg end)))
           (t (bounds-of-thing-at-point thing)))))
 
+(defun focus-make-focused-face (fg)
+  "Add original foreground color FG to the `focus-focused` face."
+  (plist-put (face-attr-construct 'focus-focused) :foreground fg))
+
+(defun focus-foreground-from-face (face)
+  "Return foreground color for FACE, or 'default if nil."
+  (if (facep face)
+      (face-attribute face :foreground)
+    (face-attribute 'default :foreground)))
+
+(defun focus-undim-area (low high)
+  "Restore original colors between LOW and HIGH.
+
+Returns the list of added overlays."
+  (let* ((next (min high (or (next-property-change low) high)))
+         (face (get-text-property low 'face))
+         (fg (focus-foreground-from-face face))
+         (restored-face (focus-make-focused-face fg))
+         (o (make-overlay low next)))
+    (overlay-put o 'face restored-face)
+    (cons o (when (< low high) (focus-undim-area next high)))))
+
 (defun focus-move-focus ()
   "Move the focused section according to `focus-bounds'.
 
@@ -198,7 +196,8 @@ command."
         (let ((low (car bounds))
               (high (cdr bounds)))
           (focus-move-overlays low high)
-          (focus-undim-area low high)))
+          (mapc 'delete-overlay focus-mid-overlays)
+          (setq focus-mid-overlays (focus-undim-area low high))))
       (setq focus-last-bounds bounds)
       (setq focus-last-background bg))))
 
