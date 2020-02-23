@@ -132,9 +132,9 @@ The timer calls `focus-read-only-hide-cursor' after
 
 (defun focus-dim-buffer ()
   "Dim the colors of relevant faces in the buffer."
+  (focus-reset-remapping)
   ;; Most faces that alters the background are better left undimmed. The
   ;; default face is, however, a clear exception.
-  (focus-reset-remapping)
   (focus-remap-foreground-color-from-face 'default)
   (dolist (face (face-list))
     (when (and (not (face-background face))
