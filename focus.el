@@ -77,7 +77,7 @@ Things that are defined include `symbol', `list', `sexp',
   :group 'focus)
 
 (defvar focus-cursor-type cursor-type
-  "Used to restore the users `cursor-type'")
+  "Used to restore the users `cursor-type'.")
 
 (defvar-local focus-current-thing nil
   "Overrides the choice of thing dictated by `focus-mode-to-thing' if set.")
@@ -207,7 +207,7 @@ command."
   (move-overlay focus-post-overlay high (point-max)))
 
 (defun focus-init ()
-  "This function runs when `focus-mode' is enabled.
+  "This function run when command `focus-mode' is enabled.
 
 It sets the `focus-pre-overlay', `focus-min-overlay', and
 `focus-post-overlay' to overlays; these are invisible until
