@@ -173,13 +173,14 @@ The timer calls `focus-read-only-hide-cursor' after
   "Restore original colors between LOW and HIGH.
 
 Returns the list of added overlays."
-  (let* ((next (min high (or (next-property-change low) high)))
-         (face (get-text-property low 'face))
-         (fg (focus-foreground-from-face face))
-         (restored-face (focus-make-focused-face fg))
-         (o (make-overlay low next)))
-    (overlay-put o 'face restored-face)
-    (cons o (when (< low high) (focus-undim-area next high)))))
+  (when (< low high)
+    (let* ((next (min high (or (next-property-change low) high)))
+           (face (get-text-property low 'face))
+           (fg (focus-foreground-from-face face))
+           (restored-face (focus-make-focused-face fg))
+           (o (make-overlay low next)))
+      (overlay-put o 'face restored-face)
+      (cons o (focus-undim-area next high)))))
 
 (defun focus-move-focus ()
   "Move the focused section according to `focus-bounds'.
