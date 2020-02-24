@@ -156,7 +156,7 @@ The timer calls `focus-read-only-hide-cursor' after
            (let* ((elem (org-element-at-point))
                   (beg (org-element-property :begin elem))
                   (end (org-element-property :end elem)))
-             (cons beg end)))
+             (and beg end (cons beg end))))
           (t (bounds-of-thing-at-point thing)))))
 
 (defun focus-make-focused-face (fg)
