@@ -142,13 +142,13 @@ The timer calls `focus-read-only-hide-cursor' after
 (defun focus-make-unfocused-face (fg)
   "Add dimmed foreground color FG to the `focus-unfocused` face."
   (let ((bg (face-background 'default)))
-    (when (and fg bg (color-defined-p fg) (color-defined-p bg))
-      (if (color-defined-p (face-attribute 'focus-unfocused :foreground))
-          'focus-unfocused
+    (if (and fg bg (color-defined-p fg) (color-defined-p bg)
+             (not (color-defined-p (face-attribute 'focus-unfocused :foreground))))
         (plist-put (face-attr-construct 'focus-unfocused)
                    :foreground (focus-lerp (color-name-to-rgb fg)
                                            (color-name-to-rgb bg)
-                                           focus-fraction))))))
+                                           focus-fraction))
+      'focus-unfocused)))
 
 (defun focus-foreground-from-face (face)
   "Return foreground color for FACE, or 'default if nil."
