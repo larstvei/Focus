@@ -116,16 +116,20 @@ The timer calls `focus-read-only-hide-cursor' after
                         (apply #'derived-mode-p modes))))
         (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence))))
 
+(defun focus-org-element-bounds ()
+  "Extract bounds from `org-element-at-point'"
+  (let* ((elem (org-element-at-point))
+         (beg (org-element-property :begin elem))
+         (end (org-element-property :end elem)))
+    (and beg end (cons beg end))))
+
+(put 'org-element 'bounds-of-thing-at-point
+     #'focus-org-element-bounds)
+
 (defun focus-bounds ()
   "Return the current bounds, based on `focus-get-thing'."
   (or focus-pin-bounds
-      (let ((thing (focus-get-thing)))
-        (cond ((eq thing 'org-element)
-               (let* ((elem (org-element-at-point))
-                      (beg (org-element-property :begin elem))
-                      (end (org-element-property :end elem)))
-                 (and beg end (cons beg end))))
-              (t (bounds-of-thing-at-point thing))))))
+      (bounds-of-thing-at-point (focus-get-thing))))
 
 (defun focus-window-bounds ()
   (cons (window-start) (window-end nil t)))
