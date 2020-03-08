@@ -183,24 +183,25 @@ If `focus-mode' is enabled, this function is added to
 `post-command-hook' and `window-scroll-functions'. The function
 can be called with an arbitrary number of ARGS to support being
 called from `window-scroll-functions'."
-  (with-current-buffer focus-buffer
-    (let* ((bg (face-background 'default))
-           (window-bounds (focus-window-bounds))
-           (bounds (focus-bounds)))
-      (when (and bounds (or (not (equal bg focus-last-background))
-                            (not (equal window-bounds focus-last-window-bounds))
-                            (not (equal bounds focus-last-bounds))))
-        (let ((start (car window-bounds))
-              (end (cdr window-bounds))
-              (low (car bounds))
-              (high (cdr bounds)))
-          (focus-remove-unfocused-overlays)
-          (focus-dim-area start low)
-          (focus-dim-area high end)
-          (move-overlay focus-focused-overlay low high)))
-      (setq focus-last-background bg)
-      (setq focus-last-window-bounds window-bounds)
-      (setq focus-last-bounds bounds))))
+  (while-no-input
+    (with-current-buffer focus-buffer
+      (let* ((bg (face-background 'default))
+             (window-bounds (focus-window-bounds))
+             (bounds (focus-bounds)))
+        (when (and bounds (or (not (equal bg focus-last-background))
+                              (not (equal window-bounds focus-last-window-bounds))
+                              (not (equal bounds focus-last-bounds))))
+          (let ((start (car window-bounds))
+                (end (cdr window-bounds))
+                (low (car bounds))
+                (high (cdr bounds)))
+            (focus-remove-unfocused-overlays)
+            (focus-dim-area start low)
+            (focus-dim-area high end)
+            (move-overlay focus-focused-overlay low high)))
+        (setq focus-last-background bg)
+        (setq focus-last-window-bounds window-bounds)
+        (setq focus-last-bounds bounds)))))
 
 (defun focus-make-focused-overlay ()
   (let ((o (make-overlay (point-min) (point-max))))
