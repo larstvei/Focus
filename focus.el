@@ -176,12 +176,12 @@ Returns the list of added overlays."
   (while focus-unfocused-overlays
     (delete-overlay (pop focus-unfocused-overlays))))
 
-(defun focus-move-focus (&rest args)
+(defun focus-move-focus (&rest _args)
   "Move the focused section according to `focus-bounds'.
 
 If `focus-mode' is enabled, this function is added to
 `post-command-hook' and `window-scroll-functions'. The function
-can be called with an arbitrary number of ARGS to support being
+can be called with an arbitrary number of _ARGS to support being
 called from `window-scroll-functions'."
   (while-no-input
     (with-current-buffer focus-buffer
