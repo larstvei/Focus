@@ -51,12 +51,12 @@ many derivatives should be placed by the end of the list.
 Things that are defined include `symbol', `list', `sexp',
 `defun', `filename', `url', `email', `word', `sentence',
 `whitespace', `line', and `page'."
-  :type '(repeat symbol)
+  :type '(alist :key-type symbol :valye-type symbol)
   :group 'focus)
 
 (defcustom focus-read-only-blink-seconds 1
   "The duration of a cursor blink in `focus-read-only-mode'."
-  :type '(float)
+  :type 'number
   :group 'focus)
 
 (defface focus-unfocused
