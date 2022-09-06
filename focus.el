@@ -44,7 +44,7 @@
 A thing is defined in thingatpt.el; the thing determines the
 narrowness of the focused section.
 
-Note that the order of the list matters. The first mode that the
+Note that the order of the list matters.  The first mode that the
 current mode is derived from is used, so more modes that have
 many derivatives should be placed by the end of the list.
 
@@ -69,7 +69,7 @@ Things that are defined include `symbol', `list', `sexp',
   :group 'focus)
 
 (defvar focus-cursor-type cursor-type
-  "Used to restore the users `cursor-type'")
+  "Used to restore the users `cursor-type'.")
 
 (defvar-local focus-current-thing nil
   "Overrides the choice of thing dictated by `focus-mode-to-thing' if set.")
@@ -114,7 +114,7 @@ command."
         (focus-move-overlays (car bounds) (cdr bounds))))))
 
 (defun focus-move-overlays (low high)
-  "Move `focus-pre-overlay', `focus-mid-overlay' and `focus-post-overlay'."
+  "Move the overlays to highlight the region between LOW and HIGH."
   (move-overlay focus-pre-overlay (point-min) low)
   (move-overlay focus-mid-overlay low high)
   (move-overlay focus-post-overlay high (point-max)))
@@ -124,7 +124,7 @@ command."
 
 It sets the `focus-pre-overlay', `focus-min-overlay', and
 `focus-post-overlay' to overlays; these are invisible until
-`focus-move-focus' is run. It adds `focus-move-focus' to
+`focus-move-focus' is run.  It adds `focus-move-focus' to
 `post-command-hook'."
   (unless (or focus-pre-overlay focus-post-overlay)
     (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
@@ -161,8 +161,8 @@ The overlays pointed to by `focus-pre-overlay',
   "Adjust the narrowness of the focused section for the current buffer.
 
 The variable `focus-mode-to-thing' dictates the default thing
-according to major-mode. If `focus-current-thing' is set, this
-default is overwritten. This function simply helps set the
+according to major-mode.  If `focus-current-thing' is set, this
+default is overwritten.  This function simply helps set the
 `focus-current-thing'."
   (interactive)
   (let* ((candidates '(defun line list paragraph sentence sexp symbol word))
