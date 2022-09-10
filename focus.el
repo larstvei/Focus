@@ -62,7 +62,7 @@ Things that are defined include `symbol', `list', `sexp',
   :group 'focus)
 
 (defface focus-unfocused
-  '((t :inherit font-lock-comment-face))
+  '((t :inherit shadow))
   "The face that overlays the unfocused area."
   :group 'focus)
 
