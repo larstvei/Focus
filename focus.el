@@ -105,9 +105,9 @@ The timer calls `focus-read-only-hide-cursor' after
   "Return the current bounds, based on `focus-get-thing'."
   (let ((thing (focus-get-thing)))
     (cond ((eq thing 'org-element)
-           (let* ((elem  (org-element-at-point))
-                  (beg (org-element-property :begin (org-element-at-point)))
-                  (end (org-element-property :end (org-element-at-point))))
+           (let* ((elem (org-element-at-point))
+                  (beg (org-element-property :begin elem))
+                  (end (org-element-property :end elem)))
              (cons beg end)))
           (t (bounds-of-thing-at-point (focus-get-thing))))))
 
