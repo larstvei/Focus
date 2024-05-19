@@ -52,7 +52,9 @@ many derivatives should be placed by the end of the list.
 
 Things that are defined include `symbol', `list', `sexp',
 `defun', `filename', `url', `email', `word', `sentence',
-`whitespace', `line', and `page'."
+`whitespace', `line', and `page'.
+
+In order for changes to take effect, reenable `focus-mode'."
   :type '(alist :key-type symbol :valye-type symbol)
   :group 'focus)
 
@@ -76,6 +78,9 @@ Things that are defined include `symbol', `list', `sexp',
 (defvar-local focus-current-thing nil
   "Overrides the choice of thing dictated by `focus-mode-to-thing' if set.")
 
+(defvar-local focus-current-thing-cache nil
+  "Caches the current thing to focus.")
+
 (defvar-local focus-buffer nil
   "Local reference to the buffer focus functions operate on.")
 
@@ -94,12 +99,16 @@ The timer calls `focus-read-only-hide-cursor' after
 `focus-read-only-blink-seconds' seconds.")
 
 (defun focus-get-thing ()
-  "Return the current thing, based on `focus-mode-to-thing'."
+  "Return the current thing, based on `focus-mode-to-thing'.
+
+This also sets `focus-current-thing-cache' to the current thing."
   (or focus-current-thing
-      (let* ((modes (mapcar 'car focus-mode-to-thing))
-             (mode  (or (cl-find major-mode modes)
-                        (apply #'derived-mode-p modes))))
-        (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence))))
+      focus-current-thing-cache
+      (setq focus-current-thing-cache
+            (let* ((modes (mapcar 'car focus-mode-to-thing))
+                   (mode  (or (cl-find major-mode modes)
+                              (apply #'derived-mode-p modes))))
+              (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence)))))
 
 (defun focus-bounds ()
   "Return the current bounds, based on `focus-get-thing'."
@@ -109,7 +118,7 @@ The timer calls `focus-read-only-hide-cursor' after
                   (beg (org-element-property :begin elem))
                   (end (org-element-property :end elem)))
              (cons beg end)))
-          (t (bounds-of-thing-at-point (focus-get-thing))))))
+          (t (bounds-of-thing-at-point thing)))))
 
 (defun focus-move-focus ()
   "Move the focused section according to `focus-bounds'.
@@ -143,6 +152,7 @@ It sets the `focus-pre-overlay', `focus-min-overlay', and
     (mapc (lambda (o) (overlay-put o 'face 'focus-unfocused))
           (list focus-pre-overlay focus-post-overlay))
     (add-hook 'post-command-hook 'focus-move-focus nil t)
+    (setq focus-current-thing-cache nil)
     (add-hook 'change-major-mode-hook 'focus-terminate nil t)))
 
 (defun focus-terminate ()
@@ -155,7 +165,8 @@ The overlays pointed to by `focus-pre-overlay',
     (mapc 'delete-overlay
           (list focus-pre-overlay focus-mid-overlay focus-post-overlay))
     (remove-hook 'post-command-hook 'focus-move-focus t)
-    (setq focus-pre-overlay nil
+    (setq focus-current-thing-cache nil
+          focus-pre-overlay nil
           focus-mid-overlay nil
           focus-post-overlay nil)))
 
