@@ -52,13 +52,24 @@ many derivatives should be placed by the end of the list.
 
 Things that are defined include `symbol', `list', `sexp',
 `defun', `filename', `url', `email', `word', `sentence',
-`whitespace', `line', and `page'."
+`whitespace', `line', and `page'.
+
+In order for changes to take effect, reenable `focus-mode'."
   :type '(alist :key-type symbol :valye-type symbol)
   :group 'focus)
 
 (defcustom focus-read-only-blink-seconds 1
   "The duration of a cursor blink in `focus-read-only-mode'."
   :type 'number
+  :group 'focus)
+
+(defcustom focus-update-idle-delay nil
+  "Delay (in seconds) before updating the focus after each command.
+The default value of nil results in an immediate update.
+Increase this value if you experience performance issues."
+  :type '(choice (const  :tag "Immediate update" nil)
+                 (const  :tag "Delayed update (0.1s)" 0.1)
+                 (number :tag "Custom delay"))
   :group 'focus)
 
 (defface focus-unfocused
@@ -75,6 +86,9 @@ Things that are defined include `symbol', `list', `sexp',
 
 (defvar-local focus-current-thing nil
   "Overrides the choice of thing dictated by `focus-mode-to-thing' if set.")
+
+(defvar-local focus-current-thing-cache nil
+  "Caches the current thing to focus.")
 
 (defvar-local focus-buffer nil
   "Local reference to the buffer focus functions operate on.")
@@ -93,13 +107,20 @@ Things that are defined include `symbol', `list', `sexp',
 The timer calls `focus-read-only-hide-cursor' after
 `focus-read-only-blink-seconds' seconds.")
 
+(defvar-local focus-update-timer nil
+  "Timer started from `focus-update'")
+
 (defun focus-get-thing ()
-  "Return the current thing, based on `focus-mode-to-thing'."
+  "Return the current thing, based on `focus-mode-to-thing'.
+
+This also sets `focus-current-thing-cache' to the current thing."
   (or focus-current-thing
-      (let* ((modes (mapcar 'car focus-mode-to-thing))
-             (mode  (or (cl-find major-mode modes)
-                        (apply #'derived-mode-p modes))))
-        (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence))))
+      focus-current-thing-cache
+      (setq focus-current-thing-cache
+            (let* ((modes (mapcar 'car focus-mode-to-thing))
+                   (mode  (or (cl-find major-mode modes)
+                              (apply #'derived-mode-p modes))))
+              (if mode (cdr (assoc mode focus-mode-to-thing)) 'sentence)))))
 
 (defun focus-bounds ()
   "Return the current bounds, based on `focus-get-thing'."
@@ -109,17 +130,30 @@ The timer calls `focus-read-only-hide-cursor' after
                   (beg (org-element-property :begin elem))
                   (end (org-element-property :end elem)))
              (cons beg end)))
-          (t (bounds-of-thing-at-point (focus-get-thing))))))
+          (t (bounds-of-thing-at-point thing)))))
 
-(defun focus-move-focus ()
+(defun focus-move-focus (buffer)
   "Move the focused section according to `focus-bounds'.
 
 If `focus-mode' is enabled, this command fires after each
 command."
-  (with-current-buffer focus-buffer
+  (with-current-buffer buffer
+    (setq focus-update-timer nil)
     (let* ((bounds (focus-bounds)))
       (when bounds
         (focus-move-overlays (car bounds) (cdr bounds))))))
+
+(defun focus-update ()
+  "Trigger an update of the focus.
+
+When `focus-update-idle-delay' is non-nil, start update after the
+specified idle delay."
+  (if focus-update-idle-delay
+      (unless focus-update-timer
+        (setq focus-update-timer
+              (run-with-idle-timer focus-update-idle-delay nil
+                                   #'focus-move-focus focus-buffer)))
+    (focus-move-focus focus-buffer)))
 
 (defun focus-move-overlays (low high)
   "Move the overlays to highlight the region between LOW and HIGH."
@@ -132,7 +166,7 @@ command."
 
 It sets the `focus-pre-overlay', `focus-min-overlay', and
 `focus-post-overlay' to overlays; these are invisible until
-`focus-move-focus' is run.  It adds `focus-move-focus' to
+`focus-update' is run.  It adds `focus-update' to
 `post-command-hook'."
   (unless (or focus-pre-overlay focus-post-overlay)
     (setq focus-pre-overlay  (make-overlay (point-min) (point-min))
@@ -142,7 +176,9 @@ It sets the `focus-pre-overlay', `focus-min-overlay', and
     (overlay-put focus-mid-overlay 'face 'focus-focused)
     (mapc (lambda (o) (overlay-put o 'face 'focus-unfocused))
           (list focus-pre-overlay focus-post-overlay))
-    (add-hook 'post-command-hook 'focus-move-focus nil t)
+    (setq focus-current-thing-cache nil
+          focus-update-timer nil)
+    (add-hook 'post-command-hook 'focus-update nil t)
     (add-hook 'change-major-mode-hook 'focus-terminate nil t)))
 
 (defun focus-terminate ()
@@ -150,12 +186,16 @@ It sets the `focus-pre-overlay', `focus-min-overlay', and
 
 The overlays pointed to by `focus-pre-overlay',
 `focus-mid-overlay' and `focus-post-overlay' are deleted, and
-`focus-move-focus' is removed from `post-command-hook'."
+`focus-update' is removed from `post-command-hook'."
   (when (and focus-pre-overlay focus-post-overlay)
     (mapc 'delete-overlay
           (list focus-pre-overlay focus-mid-overlay focus-post-overlay))
-    (remove-hook 'post-command-hook 'focus-move-focus t)
-    (setq focus-pre-overlay nil
+    (remove-hook 'post-command-hook 'focus-update t)
+    (when focus-update-timer
+      (cancel-timer focus-update-timer))
+    (setq focus-current-thing-cache nil
+          focus-update-timer nil
+          focus-pre-overlay nil
           focus-mid-overlay nil
           focus-post-overlay nil)))
 
@@ -183,13 +223,16 @@ default is overwritten.  This function simply helps set the
   (when (bound-and-true-p focus-mode)
     (when (region-active-p)
       (focus-move-overlays (region-beginning) (region-end)))
-    (remove-hook 'post-command-hook 'focus-move-focus t)))
+    (when focus-update-timer
+      (cancel-timer focus-update-timer))
+    (setq focus-update-timer nil)
+    (remove-hook 'post-command-hook 'focus-update t)))
 
 (defun focus-unpin ()
   "Unpin the focused section."
   (interactive)
   (when (bound-and-true-p focus-mode)
-    (add-hook 'post-command-hook 'focus-move-focus nil t)))
+    (add-hook 'post-command-hook 'focus-update nil t)))
 
 (defun focus-next-thing (&optional n)
   "Move the point to the middle of the Nth next thing."
