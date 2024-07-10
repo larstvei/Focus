@@ -79,6 +79,65 @@
 
    According to [[https://www.reddit.com/r/emacs/comments/b1vrar/lsp_support_for_focusel_using_lspmode/][this reddit post]], Focus plays nice with ~lsp-mode~.
 
+   Focus also works well with the built-in tree-sitter library which comes with
+   Emacs 29 or above. Below is an example configuration of using Focus with
+   ~pyton-ts-mode~:
+   #+begin_src emacs-lisp
+     (use-package focus
+       :config
+       (add-to-list 'focus-mode-to-thing '(python-ts-mode . py-thing))
+       )
+
+     (use-package treesit
+       ;; Remember to run `treesit-install-language-grammar' to install the grammar
+       ;; for each designated language.
+       :when
+       (and (fboundp 'treesit-available-p) (treesit-available-p))
+
+       :custom
+       (major-mode-remap-alist
+          (python-mode . python-ts-mode)
+          ))
+
+       :config
+       ;; define `py-thing' for `thing-at-point' so that the `focus-mode' can focus
+       ;; on such python things.
+       (defvar py-thing--thing nil
+         "Store the thing at point. `thing-at-point' moves to the end of
+     the thing first. We should not re-run `py-thing' after that."
+         )
+
+       (defvar py-things-to-focus
+         '("class_definition"
+           "function_definition"
+           "try_statement"
+           "except_clause"
+           "if_statement"
+           "else_clause"
+           "for_statement"
+           "while_statement"
+           "module")
+         "Node types considered as python thing.")
+
+       (defun py-thing-begin ()
+         (when-let ((thing (or py-thing--thing (py-thing))))
+           (goto-char (treesit-node-start thing))))
+
+       (defun py-thing-end ()
+         (when-let ((thing (py-thing)))
+           (setq py-thing--thing thing)
+           (goto-char (treesit-node-end thing))))
+
+       (defun py-thing ()
+         (treesit-parent-until
+          (treesit-node-at (point))
+          (lambda (parent) (member (treesit-node-type parent) py-things-to-focus))))
+
+       (put 'py-thing 'beginning-op 'py-thing-begin)
+       (put 'py-thing 'end-op 'py-thing-end)
+       )
+   #+end_src
+
 ** Faces
 
    Focus offers two faces, one for the focused- and unfocused area. By default,
