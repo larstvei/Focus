@@ -40,6 +40,7 @@
 
 (defcustom focus-mode-to-thing '((prog-mode . defun)
                                  (text-mode . paragraph)
+                                 (special-mode . paragraph)
                                  (org-mode . org-element))
   "An associated list between mode and thing.
 
