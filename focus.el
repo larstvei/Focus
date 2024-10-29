@@ -33,6 +33,9 @@
 (require 'cl-lib)
 (require 'thingatpt)
 
+(declare-function org-element-property "org-element" (property element))
+(declare-function org-element-at-point "org-element" (&optional pom cached-only))
+
 (defgroup focus ()
   "Dim the font color of text in surrounding sections."
   :group 'font-lock
